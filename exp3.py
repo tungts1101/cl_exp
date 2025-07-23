@@ -1,0 +1,152 @@
+import torch
+from torch import nn, optim
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+import timm
+from petl import vision_transformer_ssf # register vision_transformer_ssf
+import numpy as np
+from tqdm import tqdm
+from utils.data_manager import DataManager
+from utils.toolkit import accuracy
+from transformers import ViTModel
+
+
+seed = 42
+data_manager = DataManager('imagenetr', True, seed, 0, 20, False)  
+
+class ViTRNN(nn.Module):
+    def __init__(self, rnn_hidden_size, num_classes):
+        super(ViTRNN, self).__init__()
+        self.vit = ViTModel.from_pretrained('google/vit-base-patch16-224-in21k')  # Pretrained ViT
+        self.vit.requires_grad_(False)
+        self.rnn = nn.LSTM(input_size=self.vit.config.hidden_size,
+                           hidden_size=rnn_hidden_size,
+                           batch_first=True)
+        self.fc = nn.Linear(rnn_hidden_size, num_classes)
+
+    def forward(self, images):
+        vit_outputs = self.vit(images)  # (batch_size, num_patches, hidden_size)
+        patch_embeddings = vit_outputs.last_hidden_state  # Sequential input for RNN
+        rnn_output, _ = self.rnn(patch_embeddings)  # (batch_size, seq_len, rnn_hidden_size)
+        aggregated_features = rnn_output[:, -1, :]  # Use the last output for classification
+        logits = self.fc(aggregated_features)
+        return logits
+    
+    def show_num_params(self,verbose=False):
+        total_params = sum(p.numel() for p in self.parameters())
+        print(f"Toal number of parameters: {total_params:,}")
+        trainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
+        print(f"Total number of trainable parameters: {trainable_params:,}")
+
+class Learner:
+    def __init__(self):
+        self.model = ViTRNN(rnn_hidden_size=256, num_classes=200)
+        self.model = self.model.cuda()
+        self._known_classes = 0
+        self._classes_seen_so_far = 0
+        self.class_increments = []
+    
+    def train(self, datamanager):
+        num_task = datamanager.nb_tasks - 1
+        
+        for task in range(num_task):
+            self._classes_seen_so_far = self._known_classes + datamanager.get_task_size(task+1)
+            self.class_increments.append((self._known_classes, self._classes_seen_so_far - 1))
+            
+            print(f"Learn classes: {self._known_classes} - {self._classes_seen_so_far - 1}")
+            trainset = datamanager.get_dataset(
+                np.arange(self._known_classes, self._classes_seen_so_far),
+                source="train", mode="train")
+            trainloader = DataLoader(trainset, batch_size=32, shuffle=True, num_workers=4)
+            testset = datamanager.get_dataset(
+                np.arange(self._known_classes, self._classes_seen_so_far),
+                source="test", mode="test")
+            testloader = DataLoader(testset, batch_size=128, shuffle=False, num_workers=4)
+            
+            trainset_CPs = datamanager.get_dataset(
+                np.arange(self._known_classes, self._classes_seen_so_far),
+                source="train", mode="test")
+            trainloader_CPs = DataLoader(trainset_CPs, batch_size=128, shuffle=False, num_workers=4)
+            testset_CPs = datamanager.get_dataset(
+                np.arange(0, self._classes_seen_so_far),
+                source="test", mode="test")
+            testloader_CPs = DataLoader(testset_CPs, batch_size=128, shuffle=False, num_workers=4)
+            
+            self.tune(trainloader, testloader, self._known_classes)
+            self.fit(trainloader_CPs, testloader_CPs)
+            
+            # after task
+            self._known_classes = self._classes_seen_so_far
+    
+    def fit(self, trainloader, testloader):
+        self.model.eval()
+        y_pred, y_true = [], []
+        for _, (_, x, y) in enumerate(testloader):
+            x = x.cuda()
+            with torch.no_grad():
+                outputs = self.model(x)
+            predicts = torch.topk(outputs, k=1, dim=1, largest=True, sorted=True)[1]
+            y_pred.append(predicts.cpu().numpy())
+            y_true.append(y.cpu().numpy())
+        y_pred = np.concatenate(y_pred)
+        y_true = np.concatenate(y_true)
+        acc_total, grouped = accuracy(y_pred.T[0], y_true, self._known_classes, self.class_increments)
+        print(f"Acc total: {acc_total}, Acc grouped: {grouped}")
+    
+    def tune(self, trainloader, testloader, starting_label):
+        self.model.show_num_params()
+        
+        tune_epochs = 10
+        
+        body_lr = 0.01
+        head_lr = 0.01
+        weight_decay = 5e-4
+        min_lr = 0.0
+        
+        optimizer = optim.AdamW(self.model.parameters(), lr=body_lr)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, T_max=tune_epochs, eta_min=min_lr)
+        
+        pbar = tqdm(range(tune_epochs))
+        for _, epoch in enumerate(pbar):
+            self.model.train()
+            losses = 0.0
+            train_acc = 0
+            for i, (_, x, y) in enumerate(trainloader):
+                x, y = x.cuda(), y.cuda()
+                logits = self.model(x)
+                
+                loss = F.cross_entropy(F.softmax(logits, dim=1), y)
+                
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                
+                losses += loss.item()
+                correct = (logits.argmax(dim=1) == y).sum().item()
+                train_acc += correct
+            scheduler.step()
+            train_acc = np.around(train_acc * 100 / len(trainloader.dataset), decimals=2)
+            
+            self.model.eval()
+            test_acc = 0
+            for i, (_, x, y) in enumerate(testloader):
+                x, y = x.cuda(), y.cuda()
+                # y -= starting_label
+                with torch.no_grad():
+                    logits = self.model(x)
+                correct = (logits.argmax(dim=1) == y).sum().item()
+                test_acc += correct
+                
+            test_acc = np.around(test_acc * 100 / len(testloader.dataset), decimals=2)
+            
+            info = "Loss {:.3f}, Train_acc {:.2f}, Test_acc {:.2f}".format(
+                losses / len(trainloader.dataset),
+                train_acc,
+                test_acc,
+            )
+            pbar.set_description(info)
+
+
+learner = Learner()
+learner.train(data_manager)

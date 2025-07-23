@@ -155,3 +155,8 @@ data/**
 experiments/**
 figures**
 results/**
+
+
+logs/
+cache/
+ref/

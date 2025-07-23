@@ -16,4 +16,5 @@ ID,dataset,shuffle,init_cls,increment,model_name,convnet_type,device,seed,batch_
 14,cifar224,True,10,10,ncm,vit_base_patch32_224_clip_laion2b,0,1993,128,0,0.0,0.0,0.0005,0.0,False,-1,True
 15,cifar224,True,10,10,ncm,vit_base_patch32_224_clip_laion2b,0,1993,128,0,0.0,0.0,0.0005,0.0,True,0,True
 16,cifar224,True,10,10,ncm,vit_base_patch32_224_clip_laion2b,0,1993,128,0,0.0,0.0,0.0005,0.0,True,10000,True
-
+17,cifar224,True,10,10,lora,pretrained_vit_b16_224_in21k_lora,0,1993,48,20,0.01,0.01,0.0005,0.0,True,10000,False
+18,cifar224,True,10,10,adapter,pretrained_vit_b16_224_in21k_adapter,0,1993,48,20,0.01,0.01,0.0005,0.0,True,10000,False

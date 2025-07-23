@@ -1,9 +1,11 @@
 import logging
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps, ImageFilter
 from torch.utils.data import Dataset
 from torchvision import transforms
-from utils.data import iCIFAR224, iImageNetR, iImageNetA, CUB, omnibenchmark, vtab, cars, core50, cddb, domainnet
+from utils.data import iCIFAR224, iImageNetR, iImageNetA, CUB, omnibenchmark, vtab, cars, core50, cddb, domainnet, iTinyImageNet, iPlaces365
+import random
+
 
 class DataManager(object):
     def __init__(self, dataset_name, shuffle, seed, init_cls, increment,use_input_norm=False):
@@ -47,6 +49,10 @@ class DataManager(object):
             )
         elif mode == "test":
             trsf = transforms.Compose([*self._test_trsf, *self._common_trsf])
+        elif mode == "train_adv":
+            trsf = transforms.Compose([*self._train_trsf])
+        elif mode == "test_adv":
+            trsf = transforms.Compose([*self._test_trsf])
         else:
             raise ValueError("Unknown mode {}.".format(mode))
 
@@ -114,6 +120,29 @@ class DataManager(object):
         return np.sum(np.where(y == index))
 
 
+class GaussianBlur(object):
+    def __init__(self, p):
+        self.p = p
+
+    def __call__(self, img):
+        if random.random() < self.p:
+            sigma = random.random() * 1.9 + 0.1
+            return img.filter(ImageFilter.GaussianBlur(sigma))
+        else:
+            return img
+
+
+class Solarization(object):
+    def __init__(self, p):
+        self.p = p
+
+    def __call__(self, img):
+        if random.random() < self.p:
+            return ImageOps.solarize(img)
+        else:
+            return img
+
+    
 class DummyDataset(Dataset):
     def __init__(self, images, labels, trsf, use_path=False):
         assert len(images) == len(labels), "Data size error!"
@@ -121,6 +150,20 @@ class DummyDataset(Dataset):
         self.labels = labels
         self.trsf = trsf
         self.use_path = use_path
+        self.aug_trsf = transforms.Compose([
+            transforms.RandomResizedCrop(224, interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomApply(
+                [transforms.ColorJitter(brightness=0.4, contrast=0.4,
+                                        saturation=0.2, hue=0.1)],
+                p=0.8
+            ),
+            transforms.RandomGrayscale(p=0.2),
+            GaussianBlur(p=1.0),
+            Solarization(p=0.0),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
 
     def __len__(self):
         return len(self.images)
@@ -128,11 +171,13 @@ class DummyDataset(Dataset):
     def __getitem__(self, idx):
         if self.use_path:
             image = self.trsf(pil_loader(self.images[idx]))
+            aug = self.aug_trsf(pil_loader(self.images[idx]))
         else:
             image = self.trsf(Image.fromarray(self.images[idx]))
+            aug = self.aug_trsf(Image.fromarray(self.images[idx]))
         label = self.labels[idx]
 
-        return idx, image, label
+        return idx, aug, image, label
 
 
 def _map_new_class_index(y, order):
@@ -164,7 +209,10 @@ def _get_idata(dataset_name,use_input_norm):
     elif "domainnet" in name:
         logging.info('Starting next DIL task: '+name)
         return domainnet(name[10::],use_input_norm)
-
+    elif name=="tinyimagenet":
+        return iTinyImageNet(use_input_norm)
+    elif name=="places365":
+        return iPlaces365(use_input_norm)
     else:
         raise NotImplementedError("Unknown dataset {}.".format(dataset_name))
 

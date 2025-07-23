@@ -1,0 +1,875 @@
+ImageNet-R
+Group Accuracies after this task: {'00-19': 71.41, '20-39': 71.68, '40-59': 73.93, '60-79': 71.1, '80-99': 68.79, '100-119': 72.73, '120-139': 72.93, '140-159': 76.41, '160-179': 68.83, '180-199': 69.43}
+Ave Acc curve: [86.94, 81.47, 79.82, 78.75, 76.24, 74.52, 74.09, 73.62, 72.59, 71.72]
+Top1 curve: [86.94, 81.53, 79.87, 78.82, 76.45, 74.62, 74.21, 73.84, 72.88, 71.95]
+
+Norm - Finetune 1 epochs
+Acc total: 75.05, Acc grouped: {'00-19': 79.1, '20-39': 76.74, '40-59': 76.73, '60-79': 75.31, '80-99': 71.46, '100-119': 74.24, '120-139': 69.95, '140-159': 79.01, '160-179': 72.59, '180-199': 72.37}
+
+Norm - Finetune 20 epochs
+Acc total: 77.18, Acc grouped: {'00-19': 83.16, '20-39': 80.06, '40-59': 77.56, '60-79': 77.23, '80-99': 73.1, '100-119': 76.67, '120-139': 71.35, '140-159': 79.56, '160-179': 74.27, '180-199': 75.65}
+
+Norm - Finetune 20 epochs - (Return last layer norm)
+Acc total: 77.03, Acc grouped: {'00-19': 83.02, '20-39': 80.22, '40-59': 75.91, '60-79': 77.93, '80-99': 72.28, '100-119': 76.36, '120-139': 70.47, '140-159': 80.11, '160-179': 73.43, '180-199': 77.03}
+
+Layer Norm - Finetune 20 epochs
+seed 1993 - 1994 - 1995
+Acc total: 79.57, Acc grouped: {'00-19': 82.58, '20-39': 81.17, '40-59': 79.04, '60-79': 76.88, '80-99': 74.33, '100-119': 82.42, '120-139': 77.86, '140-159': 82.85, '160-179': 76.78, '180-199': 78.41}
+Acc total: 79.0, Acc grouped: {'00-19': 82.26, '20-39': 78.16, '40-59': 79.93, '60-79': 74.85, '80-99': 79.39, '100-119': 80.0, '120-139': 78.67, '140-159': 78.86, '160-179': 76.81, '180-199': 79.97}
+Acc total: 79.15, Acc grouped: {'00-19': 84.12, '20-39': 80.17, '40-59': 79.29, '60-79': 77.66, '80-99': 73.25, '100-119': 81.25, '120-139': 74.37, '140-159': 83.89, '160-179': 72.74, '180-199': 81.83}
+
+CIFAR224
+seed - 1995
+Acc total: 90.14, Acc grouped: {'00-09': 94.0, '10-19': 90.4, '20-29': 89.4, '30-39': 86.1, '40-49': 86.0, '50-59': 93.4, '60-69': 90.7, '70-79': 89.8, '80-89': 89.6, '90-99': 92.0}
+
+CLIP based - NCM - exp18
+Acc total: 59.0, Acc grouped: {'00-19': 57.47, '20-39': 63.13, '40-59': 60.07, '60-79': 55.34, '80-99': 60.57, '100-119': 61.52, '120-139': 63.8, '140-159': 51.44, '160-179': 56.49, '180-199': 61.49}
+
+Data Aug - Finetune 20 epochs
+Acc total: 78.58, Acc grouped: {'00-19': 81.71, '20-39': 79.43, '40-59': 78.05, '60-79': 76.18, '80-99': 74.74, '100-119': 80.91, '120-139': 77.33, '140-159': 81.76, '160-179': 75.31, '180-199': 77.37}
+Data Aug = Retrain 20 epochs
+Acc total: 77.65, Acc grouped: {'00-19': 82.0, '20-39': 78.32, '40-59': 75.91, '60-79': 75.31, '80-99': 74.74, '100-119': 80.61, '120-139': 77.15, '140-159': 80.52, '160-179': 73.01, '180-199': 75.65}
+
+Feature concat & project to a higher dimension - Finetune 20 epochs
+Acc total: 79.0, Acc grouped: {'00-19': 80.99, '20-39': 80.22, '40-59': 79.04, '60-79': 76.18, '80-99': 73.31, '100-119': 82.27, '120-139': 77.5, '140-159': 83.13, '160-179': 75.73, '180-199': 78.07}
+
+[x] End-to-end training with self-supervised loss
+
+Acc total: 65.37, Acc grouped: {'00-19': 65.37}
+Acc total: 61.56, Acc grouped: {'00-19': 58.85, '20-39': 64.43}
+Acc total: 58.85, Acc grouped: {'00-19': 52.8, '20-39': 59.67, '40-59': 64.2}
+Acc total: 54.4, Acc grouped: {'00-19': 50.16, '20-39': 56.89, '40-59': 60.09, '60-79': 50.56}
+Acc total: 53.93, Acc grouped: {'00-19': 48.29, '20-39': 54.59, '40-59': 56.47, '60-79': 49.11, '80-99': 60.28}
+Acc total: 52.36, Acc grouped: {'00-19': 45.81, '20-39': 51.97, '40-59': 55.52, '60-79': 46.86, '80-99': 58.07, '100-119': 55.62}
+Acc total: 50.23, Acc grouped: {'00-19': 44.57, '20-39': 50.98, '40-59': 53.94, '60-79': 45.57, '80-99': 56.97, '100-119': 52.43, '120-139': 45.72}
+Acc total: 49.74, Acc grouped: {'00-19': 43.48, '20-39': 50.0, '40-59': 52.37, '60-79': 44.61, '80-99': 56.0, '100-119': 51.31, '120-139': 44.75, '140-159': 54.23}
+Acc total: 46.75, Acc grouped: {'00-19': 42.55, '20-39': 48.85, '40-59': 50.63, '60-79': 43.48, '80-99': 55.72, '100-119': 50.37, '120-139': 43.39, '140-159': 52.16, '160-179': 32.36}
+Acc total: 45.62, Acc grouped: {'00-19': 40.99, '20-39': 48.03, '40-59': 49.05, '60-79': 42.35, '80-99': 54.21, '100-119': 49.63, '120-139': 42.41, '140-159': 51.12, '160-179': 30.89, '180-199': 46.56}
+
+Acc total: 98.4, Acc grouped: {'00-09': 98.4}
+Acc total: 85.95, Acc grouped: {'00-09': 96.4, '10-19': 75.5}
+Acc total: 76.43, Acc grouped: {'00-09': 90.4, '10-19': 66.0, '20-29': 72.9}
+Acc total: 74.4, Acc grouped: {'00-09': 86.5, '10-19': 63.3, '20-29': 71.5, '30-39': 76.3}
+Acc total: 72.14, Acc grouped: {'00-09': 83.7, '10-19': 60.1, '20-29': 70.2, '30-39': 74.0, '40-49': 72.7}
+Acc total: 73.72, Acc grouped: {'00-09': 82.5, '10-19': 59.4, '20-29': 69.0, '30-39': 72.4, '40-49': 71.1, '50-59': 87.9}
+Acc total: 70.96, Acc grouped: {'00-09': 79.6, '10-19': 57.5, '20-29': 67.5, '30-39': 68.9, '40-49': 67.9, '50-59': 82.8, '60-69': 72.5}
+Acc total: 68.56, Acc grouped: {'00-09': 72.9, '10-19': 56.6, '20-29': 66.6, '30-39': 67.9, '40-49': 66.7, '50-59': 80.9, '60-69': 71.9, '70-79': 65.0}
+Acc total: 65.09, Acc grouped: {'00-09': 71.6, '10-19': 55.5, '20-29': 65.1, '30-39': 60.4, '40-49': 65.4, '50-59': 80.0, '60-69': 71.0, '70-79': 63.9, '80-89': 52.9}
+Acc total: 64.05, Acc grouped: {'00-09': 70.4, '10-19': 54.5, '20-29': 63.8, '30-39': 59.3, '40-49': 63.8, '50-59': 78.8, '60-69': 68.0, '70-79': 62.1, '80-89': 51.1, '90-99': 68.7}
+
+top_k = 50, lambda = 1/num_tasks
+Acc total: 65.37, Acc grouped: {'00-19': 65.37}
+Acc total: 61.56, Acc grouped: {'00-19': 58.85, '20-39': 64.43}
+Acc total: 58.85, Acc grouped: {'00-19': 52.8, '20-39': 59.67, '40-59': 64.2}
+Acc total: 54.4, Acc grouped: {'00-19': 50.16, '20-39': 56.89, '40-59': 60.09, '60-79': 50.56}
+Acc total: 53.93, Acc grouped: {'00-19': 48.29, '20-39': 54.59, '40-59': 56.47, '60-79': 49.11, '80-99': 60.28}
+Acc total: 52.36, Acc grouped: {'00-19': 45.81, '20-39': 51.97, '40-59': 55.52, '60-79': 46.86, '80-99': 58.07, '100-119': 55.62}
+Acc total: 50.23, Acc grouped: {'00-19': 44.57, '20-39': 50.98, '40-59': 53.94, '60-79': 45.57, '80-99': 56.97, '100-119': 52.43, '120-139': 45.72}
+Acc total: 49.74, Acc grouped: {'00-19': 43.48, '20-39': 50.0, '40-59': 52.37, '60-79': 44.61, '80-99': 56.0, '100-119': 51.31, '120-139': 44.75, '140-159': 54.23}
+Acc total: 46.75, Acc grouped: {'00-19': 42.55, '20-39': 48.85, '40-59': 50.63, '60-79': 43.48, '80-99': 55.72, '100-119': 50.37, '120-139': 43.39, '140-159': 52.16, '160-179': 32.36}
+Acc total: 45.62, Acc grouped: {'00-19': 40.99, '20-39': 48.03, '40-59': 49.05, '60-79': 42.35, '80-99': 54.21, '100-119': 49.63, '120-139': 42.41, '140-159': 51.12, '160-179': 30.89, '180-199': 46.56}
+
+top_k = 100, lambda = 1/num_tasks
+Acc total: 65.06, Acc grouped: {'00-19': 65.06}
+Acc total: 57.97, Acc grouped: {'00-19': 55.28, '20-39': 60.82}
+Acc total: 57.15, Acc grouped: {'00-19': 51.86, '20-39': 57.7, '40-59': 61.99}
+
+backbone merge: top_k = 100, lambda = 1, head merge: top_k = 100, lambda = 1
+Acc total: 41.3, Acc grouped: {'00-19': 41.3}
+Acc total: 32.85, Acc grouped: {'00-19': 33.54, '20-39': 32.13}
+
+backbone merge: top_k = 100, lambda = 0.5, head merge: top_k = 100, lambda = 1
+Acc total: 40.22, Acc grouped: {'00-19': 40.22}
+
+backbone merge: top_k = 100, lambda = 0.5, lr = 1e-4
+Acc total: 8.07, Acc grouped: {'00-19': 8.07}
+
+backbone merge: top_k = 100, lambda = 0.5, lr = 1e-2
+Acc total: 70.19, Acc grouped: {'00-19': 70.19}
+Acc total: 58.29, Acc grouped: {'00-19': 63.82, '20-39': 52.46}
+Acc total: 60.28, Acc grouped: {'00-19': 58.85, '20-39': 53.44, '40-59': 68.3}
+Acc total: 56.32, Acc grouped: {'00-19': 57.14, '20-39': 51.31, '40-59': 65.3, '60-79': 51.21}
+Acc total: 57.64, Acc grouped: {'00-19': 56.37, '20-39': 49.51, '40-59': 63.72, '60-79': 50.4, '80-99': 66.48}
+Acc total: 56.42, Acc grouped: {'00-19': 54.5, '20-39': 49.34, '40-59': 62.46, '60-79': 48.95, '80-99': 65.66, '100-119': 55.81}
+Acc total: 55.49, Acc grouped: {'00-19': 53.42, '20-39': 48.85, '40-59': 61.83, '60-79': 47.99, '80-99': 64.83, '100-119': 53.93, '120-139': 55.64}
+Acc total: 54.78, Acc grouped: {'00-19': 52.64, '20-39': 46.56, '40-59': 61.04, '60-79': 47.02, '80-99': 64.69, '100-119': 53.37, '120-139': 55.06, '140-159': 55.96}
+Acc total: 52.28, Acc grouped: {'00-19': 51.86, '20-39': 46.39, '40-59': 59.78, '60-79': 46.22, '80-99': 64.69, '100-119': 53.18, '120-139': 53.5, '140-159': 55.79, '160-179': 37.24}
+Acc total: 51.35, Acc grouped: {'00-19': 50.78, '20-39': 45.57, '40-59': 58.2, '60-79': 46.05, '80-99': 63.17, '100-119': 52.81, '120-139': 53.7, '140-159': 54.92, '160-179': 37.07, '180-199': 49.43}
+
+fine_tune_train_batch_size: 48 | fine_tune_train_epochs: 30 | merge_trim_top_k: 100 | merge_lambda: 0.5
+Acc total: 72.52, Acc grouped: {'00-19': 72.52}
+Acc total: 62.92, Acc grouped: {'00-19': 67.08, '20-39': 58.52}
+Acc total: 61.65, Acc grouped: {'00-19': 65.84, '20-39': 58.03, '40-59': 60.88}
+Acc total: 60.78, Acc grouped: {'00-19': 64.6, '20-39': 56.72, '40-59': 56.62, '60-79': 65.06}
+Acc total: 61.75, Acc grouped: {'00-19': 61.49, '20-39': 55.57, '40-59': 54.89, '60-79': 64.25, '80-99': 71.03}
+Acc total: 59.24, Acc grouped: {'00-19': 58.85, '20-39': 53.61, '40-59': 54.1, '60-79': 63.29, '80-99': 69.38, '100-119': 53.75}
+Acc total: 57.38, Acc grouped: {'00-19': 57.45, '20-39': 52.13, '40-59': 53.31, '60-79': 62.64, '80-99': 68.55, '100-119': 51.5, '120-139': 52.53}
+Acc total: 56.94, Acc grouped: {'00-19': 57.14, '20-39': 51.97, '40-59': 52.68, '60-79': 62.8, '80-99': 68.41, '100-119': 50.94, '120-139': 52.53, '140-159': 55.44}
+Acc total: 53.8, Acc grouped: {'00-19': 56.37, '20-39': 51.8, '40-59': 51.26, '60-79': 62.16, '80-99': 68.41, '100-119': 50.75, '120-139': 50.97, '140-159': 54.4, '160-179': 34.47}
+Acc total: 52.68, Acc grouped: {'00-19': 54.19, '20-39': 51.15, '40-59': 49.84, '60-79': 61.35, '80-99': 66.21, '100-119': 49.63, '120-139': 50.78, '140-159': 53.02, '160-179': 34.47, '180-199': 53.05}
+
+fine_tune_train_batch_size: 128 | fine_tune_train_epochs: 50 | merge_trim_top_k: 100 | merge_lambda: 0.5
+Loss 0.020, Train_acc 65.44, Test_acc 68.94
+Acc total: 65.06, Acc grouped: {'00-19': 65.06}
+fine_tune_train_batch_size: 32 | fine_tune_train_epochs: 50 | merge_trim_top_k: 100 | merge_lambda: 0.5
+fine_tune_train_batch_size: 32 | fine_tune_train_epochs: 50 | merge_trim_top_k: 100 | merge_lambda: 0.5
+Loss 0.077, Train_acc 65.05, Test_acc 67.55
+Acc total: 52.8, Acc grouped: {'00-19': 52.8}
+Loss 0.074, Train_acc 70.68, Test_acc 75.41
+Acc total: 43.86, Acc grouped: {'00-19': 42.55, '20-39': 45.25}
+
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 50 | merge_trim_top_k: 100 | merge_lambda: 0.5
+Loss 0.037, Train_acc 77.38, Test_acc 81.06
+Acc total: 74.22, Acc grouped: {'00-19': 74.22}
+Loss 0.037, Train_acc 73.68, Test_acc 74.59
+Acc total: 66.27, Acc grouped: {'00-19': 71.27, '20-39': 60.98}
+Loss 0.036, Train_acc 80.54, Test_acc 80.76
+Acc total: 65.73, Acc grouped: {'00-19': 69.25, '20-39': 60.98, '40-59': 66.72}
+Loss 0.039, Train_acc 64.28, Test_acc 66.99
+Acc total: 60.74, Acc grouped: {'00-19': 67.7, '20-39': 60.16, '40-59': 64.2, '60-79': 50.56}
+Loss 0.035, Train_acc 81.18, Test_acc 83.86
+Acc total: 62.59, Acc grouped: {'00-19': 66.15, '20-39': 59.34, '40-59': 64.67, '60-79': 50.56, '80-99': 70.62}
+Loss 0.037, Train_acc 73.72, Test_acc 79.59
+Acc total: 61.86, Acc grouped: {'00-19': 64.91, '20-39': 57.38, '40-59': 63.25, '60-79': 49.28, '80-99': 69.52, '100-119': 65.92}
+Loss 0.037, Train_acc 76.74, Test_acc 78.40
+Acc total: 60.04, Acc grouped: {'00-19': 64.29, '20-39': 56.56, '40-59': 62.62, '60-79': 48.79, '80-99': 68.14, '100-119': 64.79, '120-139': 52.92}
+Loss 0.036, Train_acc 79.75, Test_acc 79.10
+Acc total: 59.84, Acc grouped: {'00-19': 64.13, '20-39': 54.92, '40-59': 61.99, '60-79': 48.47, '80-99': 67.59, '100-119': 63.67, '120-139': 52.33, '140-159': 63.56}
+Loss 0.040, Train_acc 53.47, Test_acc 55.45
+Acc total: 56.99, Acc grouped: {'00-19': 63.51, '20-39': 54.59, '40-59': 61.2, '60-79': 47.34, '80-99': 68.28, '100-119': 63.67, '120-139': 50.97, '140-159': 64.08, '160-179': 37.24}
+Loss 0.036, Train_acc 81.18, Test_acc 78.05
+Acc total: 55.93, Acc grouped: {'00-19': 61.8, '20-39': 53.61, '40-59': 60.41, '60-79': 47.18, '80-99': 66.48, '100-119': 63.48, '120-139': 50.58, '140-159': 62.87, '160-179': 35.77, '180-199': 55.34}
+
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 0.5
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 0.5
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 0.5
+Loss 0.037, Train_acc 80.23, Test_acc 83.70
+Acc total: 78.11, Acc grouped: {'00-19': 78.11}
+Loss 0.037, Train_acc 75.54, Test_acc 83.11
+Acc total: 60.77, Acc grouped: {'00-19': 63.2, '20-39': 58.2}
+Loss 0.037, Train_acc 71.01, Test_acc 78.86
+Acc total: 51.8, Acc grouped: {'00-19': 52.17, '20-39': 50.82, '40-59': 52.37}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 2.0
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 1.0
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.079, Train_acc 35.88, Test_acc 35.40
+Acc total: 35.4, Acc grouped: {'00-19': 35.4}
+Loss 0.079, Train_acc 27.35, Test_acc 24.92
+Acc total: 27.27, Acc grouped: {'00-19': 30.9, '20-39': 23.44}
+Loss 0.082, Train_acc 10.32, Test_acc 10.09
+Acc total: 17.21, Acc grouped: {'00-19': 22.05, '20-39': 19.84, '40-59': 9.78}
+Loss 0.077, Train_acc 43.03, Test_acc 41.87
+Acc total: 21.56, Acc grouped: {'00-19': 19.72, '20-39': 18.69, '40-59': 8.99, '60-79': 39.13}
+Loss 0.078, Train_acc 33.84, Test_acc 35.31
+Acc total: 22.23, Acc grouped: {'00-19': 18.17, '20-39': 15.25, '40-59': 8.68, '60-79': 35.91, '80-99': 31.86}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 2.0
+Loss 0.039, Train_acc 64.86, Test_acc 67.70
+Acc total: 59.63, Acc grouped: {'00-19': 59.63}
+
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 2.0
+Loss 0.039, Train_acc 64.86, Test_acc 67.70
+Acc total: 59.63, Acc grouped: {'00-19': 59.63}
+Loss 0.037, Train_acc 70.96, Test_acc 76.56
+Acc total: 62.6, Acc grouped: {'00-19': 60.87, '20-39': 64.43}
+Loss 0.037, Train_acc 70.13, Test_acc 73.34
+Acc total: 53.12, Acc grouped: {'00-19': 51.09, '20-39': 51.48, '40-59': 56.78}
+Loss 0.038, Train_acc 66.18, Test_acc 68.60
+Acc total: 52.25, Acc grouped: {'00-19': 50.16, '20-39': 51.48, '40-59': 55.68, '60-79': 51.69}
+Loss 0.036, Train_acc 76.85, Test_acc 80.55
+Acc total: 49.78, Acc grouped: {'00-19': 45.19, '20-39': 45.74, '40-59': 51.42, '60-79': 48.63, '80-99': 56.83}
+
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 0.1
+Loss 0.046, Train_acc 17.24, Test_acc 36.02
+Acc total: 18.94, Acc grouped: {'00-19': 18.94}
+Loss 0.045, Train_acc 18.99, Test_acc 31.80
+Acc total: 16.75, Acc grouped: {'00-19': 16.15, '20-39': 17.38}
+Loss 0.046, Train_acc 13.54, Test_acc 29.81
+Acc total: 15.84, Acc grouped: {'00-19': 15.84, '20-39': 17.38, '40-59': 14.35}
+Loss 0.046, Train_acc 14.78, Test_acc 33.33
+Acc total: 15.58, Acc grouped: {'00-19': 15.06, '20-39': 16.07, '40-59': 12.62, '60-79': 18.68}
+Loss 0.045, Train_acc 20.10, Test_acc 37.24
+Acc total: 17.29, Acc grouped: {'00-19': 15.06, '20-39': 15.57, '40-59': 12.78, '60-79': 18.2, '80-99': 23.86}
+Loss 0.046, Train_acc 15.51, Test_acc 29.21
+Acc total: 16.96, Acc grouped: {'00-19': 14.6, '20-39': 14.26, '40-59': 12.62, '60-79': 17.71, '80-99': 23.72, '100-119': 17.98}
+Loss 0.046, Train_acc 15.08, Test_acc 27.82
+Acc total: 15.88, Acc grouped: {'00-19': 13.82, '20-39': 13.93, '40-59': 12.3, '60-79': 17.39, '80-99': 23.31, '100-119': 17.6, '120-139': 11.09}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 1.0
+Loss 0.046, Train_acc 17.24, Test_acc 36.02
+Acc total: 18.79, Acc grouped: {'00-19': 18.79}
+Loss 0.045, Train_acc 18.99, Test_acc 31.80
+Acc total: 16.99, Acc grouped: {'00-19': 16.3, '20-39': 17.7}
+Loss 0.046, Train_acc 13.54, Test_acc 29.81
+Acc total: 15.94, Acc grouped: {'00-19': 15.84, '20-39': 17.54, '40-59': 14.51}
+Loss 0.046, Train_acc 14.78, Test_acc 33.33
+Acc total: 15.58, Acc grouped: {'00-19': 14.91, '20-39': 15.9, '40-59': 12.78, '60-79': 18.84}
+Loss 0.045, Train_acc 20.10, Test_acc 37.24
+Acc total: 17.32, Acc grouped: {'00-19': 15.06, '20-39': 15.57, '40-59': 12.93, '60-79': 18.04, '80-99': 24.0}
+Loss 0.046, Train_acc 15.51, Test_acc 29.21
+Acc total: 16.93, Acc grouped: {'00-19': 14.44, '20-39': 14.1, '40-59': 12.78, '60-79': 17.71, '80-99': 23.72, '100-119': 17.98}
+Loss 0.046, Train_acc 15.08, Test_acc 27.82
+Acc total: 15.97, Acc grouped: {'00-19': 13.51, '20-39': 14.26, '40-59': 12.62, '60-79': 17.39, '80-99': 23.31, '100-119': 17.79, '120-139': 11.28}
+Loss 0.046, Train_acc 19.30, Test_acc 41.97
+Acc total: 16.99, Acc grouped: {'00-19': 13.2, '20-39': 14.59, '40-59': 12.3, '60-79': 17.39, '80-99': 23.03, '100-119': 17.79, '120-139': 11.48, '140-159': 25.04}
+Loss 0.046, Train_acc 13.64, Test_acc 19.35
+Acc total: 15.6, Acc grouped: {'00-19': 12.42, '20-39': 14.1, '40-59': 12.46, '60-79': 17.23, '80-99': 23.03, '100-119': 17.04, '120-139': 10.51, '140-159': 22.11, '160-179': 10.08}
+Loss 0.046, Train_acc 16.30, Test_acc 26.15
+Acc total: 14.98, Acc grouped: {'00-19': 10.09, '20-39': 13.93, '40-59': 10.57, '60-79': 16.59, '80-99': 22.34, '100-119': 16.29, '120-139': 10.51, '140-159': 21.07, '160-179': 9.92, '180-199': 17.75}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 10.0
+Loss 0.046, Train_acc 17.24, Test_acc 36.02
+Acc total: 25.93, Acc grouped: {'00-19': 25.93}
+Loss 0.045, Train_acc 18.99, Test_acc 31.80
+Acc total: 20.97, Acc grouped: {'00-19': 21.89, '20-39': 20.0}
+Loss 0.046, Train_acc 13.54, Test_acc 29.81
+Acc total: 19.6, Acc grouped: {'00-19': 20.34, '20-39': 18.52, '40-59': 19.87}
+Loss 0.046, Train_acc 14.78, Test_acc 33.33
+Acc total: 18.89, Acc grouped: {'00-19': 18.63, '20-39': 16.72, '40-59': 17.35, '60-79': 22.87}
+Loss 0.045, Train_acc 20.10, Test_acc 37.24
+Acc total: 20.72, Acc grouped: {'00-19': 18.17, '20-39': 17.38, '40-59': 16.88, '60-79': 22.38, '80-99': 27.72}
+Loss 0.046, Train_acc 15.51, Test_acc 29.21
+Acc total: 20.36, Acc grouped: {'00-19': 17.55, '20-39': 16.72, '40-59': 17.98, '60-79': 21.42, '80-99': 26.07, '100-119': 21.72}
+Loss 0.046, Train_acc 15.08, Test_acc 27.82
+Acc total: 18.87, Acc grouped: {'00-19': 15.53, '20-39': 16.39, '40-59': 17.51, '60-79': 18.84, '80-99': 26.34, '100-119': 21.16, '120-139': 14.79}
+Loss 0.046, Train_acc 19.30, Test_acc 41.97
+Acc total: 19.93, Acc grouped: {'00-19': 15.06, '20-39': 15.9, '40-59': 16.88, '60-79': 19.16, '80-99': 26.48, '100-119': 20.04, '120-139': 14.98, '140-159': 29.88}
+Loss 0.046, Train_acc 13.64, Test_acc 19.35
+Acc total: 18.74, Acc grouped: {'00-19': 15.06, '20-39': 15.74, '40-59': 17.03, '60-79': 19.0, '80-99': 26.62, '100-119': 18.91, '120-139': 14.4, '140-159': 29.19, '160-179': 11.38}
+Loss 0.046, Train_acc 16.30, Test_acc 26.15
+Acc total: 17.48, Acc grouped: {'00-19': 13.35, '20-39': 14.59, '40-59': 13.72, '60-79': 18.36, '80-99': 24.83, '100-119': 18.73, '120-139': 13.62, '140-159': 26.77, '160-179': 11.38, '180-199': 18.7}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.046, Train_acc 17.24, Test_acc 36.02
+Acc total: 32.61, Acc grouped: {'00-19': 32.61}
+Loss 0.045, Train_acc 18.99, Test_acc 31.80
+Acc total: 18.74, Acc grouped: {'00-19': 18.79, '20-39': 18.69}
+Loss 0.046, Train_acc 13.54, Test_acc 29.81
+Acc total: 16.21, Acc grouped: {'00-19': 17.08, '20-39': 12.46, '40-59': 18.93}
+Loss 0.046, Train_acc 14.78, Test_acc 33.33
+Acc total: 13.15, Acc grouped: {'00-19': 12.27, '20-39': 9.67, '40-59': 10.57, '60-79': 20.13}
+Loss 0.045, Train_acc 20.10, Test_acc 37.24
+Acc total: 7.27, Acc grouped: {'00-19': 5.43, '20-39': 4.92, '40-59': 6.15, '60-79': 8.21, '80-99': 11.03}
+Loss 0.046, Train_acc 15.51, Test_acc 29.21
+Acc total: 8.41, Acc grouped: {'00-19': 5.59, '20-39': 6.23, '40-59': 6.47, '60-79': 10.31, '80-99': 12.55, '100-119': 8.8}
+Loss 0.046, Train_acc 15.08, Test_acc 27.82
+Acc total: 5.86, Acc grouped: {'00-19': 3.42, '20-39': 2.79, '40-59': 6.15, '60-79': 5.31, '80-99': 8.97, '100-119': 5.06, '120-139': 9.34}
+Loss 0.046, Train_acc 19.30, Test_acc 41.97
+Acc total: 5.37, Acc grouped: {'00-19': 3.26, '20-39': 2.3, '40-59': 4.42, '60-79': 4.51, '80-99': 6.07, '100-119': 3.37, '120-139': 7.39, '140-159': 12.09}
+Loss 0.046, Train_acc 13.64, Test_acc 19.35
+Acc total: 5.62, Acc grouped: {'00-19': 4.04, '20-39': 1.8, '40-59': 4.1, '60-79': 4.67, '80-99': 7.31, '100-119': 3.18, '120-139': 9.73, '140-159': 12.78, '160-179': 3.58}
+Loss 0.046, Train_acc 16.30, Test_acc 26.15
+Acc total: 5.38, Acc grouped: {'00-19': 3.11, '20-39': 1.97, '40-59': 3.63, '60-79': 4.19, '80-99': 7.31, '100-119': 2.43, '120-139': 7.0, '140-159': 10.88, '160-179': 4.23, '180-199': 9.73}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.044, Train_acc 30.93, Test_acc 51.71
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.044, Train_acc 30.93, Test_acc 51.71
+Acc total: 51.71, Acc grouped: {'00-19': 51.71}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.044, Train_acc 30.93, Test_acc 51.71
+Acc total: 51.71, Acc grouped: {'00-19': 51.71}
+Loss 0.057, Train_acc 6.18, Test_acc 25.57
+Acc total: 33.49, Acc grouped: {'00-19': 40.99, '20-39': 25.57}
+Loss 0.065, Train_acc 0.00, Test_acc 0.00
+Acc total: 22.67, Acc grouped: {'00-19': 42.24, '20-39': 25.57, '40-59': 0.0}
+Loss 0.069, Train_acc 5.88, Test_acc 9.02
+Acc total: 17.46, Acc grouped: {'00-19': 38.98, '20-39': 21.48, '40-59': 0.0, '60-79': 9.02}
+Loss 0.072, Train_acc 0.32, Test_acc 2.62
+Acc total: 14.41, Acc grouped: {'00-19': 40.68, '20-39': 21.31, '40-59': 0.0, '60-79': 8.86, '80-99': 2.62}
+Loss 0.075, Train_acc 2.58, Test_acc 9.18
+Acc total: 13.4, Acc grouped: {'00-19': 40.84, '20-39': 19.67, '40-59': 0.0, '60-79': 8.86, '80-99': 2.48, '100-119': 9.18}
+Loss 0.079, Train_acc 0.00, Test_acc 0.19
+Acc total: 11.91, Acc grouped: {'00-19': 41.3, '20-39': 19.67, '40-59': 0.0, '60-79': 8.86, '80-99': 2.48, '100-119': 9.36, '120-139': 0.19}
+Loss 0.081, Train_acc 0.04, Test_acc 2.07
+Acc total: 10.92, Acc grouped: {'00-19': 42.24, '20-39': 20.0, '40-59': 0.0, '60-79': 8.53, '80-99': 2.62, '100-119': 9.74, '120-139': 0.19, '140-159': 2.07}
+Loss 0.081, Train_acc 0.64, Test_acc 6.34
+Acc total: 10.35, Acc grouped: {'00-19': 42.24, '20-39': 20.16, '40-59': 0.0, '60-79': 8.7, '80-99': 2.48, '100-119': 9.55, '120-139': 0.19, '140-159': 1.55, '160-179': 6.34}
+Loss 0.084, Train_acc 1.26, Test_acc 8.78
+Acc total: 9.87, Acc grouped: {'00-19': 41.93, '20-39': 18.69, '40-59': 0.0, '60-79': 8.37, '80-99': 2.62, '100-119': 9.18, '120-139': 0.19, '140-159': 0.86, '160-179': 5.85, '180-199': 8.78}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.045, Train_acc 27.46, Test_acc 44.41
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.045, Train_acc 27.46, Test_acc 44.41
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.045, Train_acc 27.46, Test_acc 44.41
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.045, Train_acc 27.46, Test_acc 44.41
+Acc total: 43.32, Acc grouped: {'00-19': 43.32}
+Loss 0.043, Train_acc 31.18, Test_acc 59.18
+Acc total: 32.22, Acc grouped: {'00-19': 29.35, '20-39': 35.25}
+Loss 0.043, Train_acc 33.43, Test_acc 58.83
+Acc total: 22.72, Acc grouped: {'00-19': 18.79, '20-39': 23.93, '40-59': 25.55}
+Loss 0.043, Train_acc 36.22, Test_acc 63.29
+Acc total: 12.48, Acc grouped: {'00-19': 9.16, '20-39': 10.16, '40-59': 8.52, '60-79': 22.22}
+Loss 0.042, Train_acc 39.84, Test_acc 70.76
+Acc total: 12.24, Acc grouped: {'00-19': 8.07, '20-39': 9.02, '40-59': 8.2, '60-79': 21.74, '80-99': 14.07}
+Loss 0.042, Train_acc 40.21, Test_acc 68.73
+Acc total: 13.38, Acc grouped: {'00-19': 7.61, '20-39': 10.33, '40-59': 9.46, '60-79': 23.35, '80-99': 13.79, '100-119': 16.29}
+Loss 0.045, Train_acc 28.26, Test_acc 56.03
+Acc total: 12.24, Acc grouped: {'00-19': 7.61, '20-39': 10.49, '40-59': 10.41, '60-79': 21.26, '80-99': 13.38, '100-119': 14.98, '120-139': 7.0}
+Loss 0.044, Train_acc 28.38, Test_acc 50.09
+Acc total: 11.13, Acc grouped: {'00-19': 7.14, '20-39': 8.36, '40-59': 9.31, '60-79': 20.93, '80-99': 12.55, '100-119': 14.23, '120-139': 6.03, '140-159': 9.84}
+Loss 0.042, Train_acc 38.87, Test_acc 67.32
+Acc total: 9.0, Acc grouped: {'00-19': 4.66, '20-39': 5.25, '40-59': 6.47, '60-79': 16.59, '80-99': 8.55, '100-119': 9.55, '120-139': 5.64, '140-159': 7.77, '160-179': 16.26}
+Loss 0.043, Train_acc 36.56, Test_acc 57.82
+Acc total: 10.07, Acc grouped: {'00-19': 6.06, '20-39': 5.74, '40-59': 8.36, '60-79': 17.55, '80-99': 9.1, '100-119': 11.61, '120-139': 6.23, '140-159': 7.77, '160-179': 18.54, '180-199': 9.35}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 4.19, Acc grouped: {'00-19': 4.19}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 1.91, Acc grouped: {'00-19': 1.71, '20-39': 2.13}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 1.06, Acc grouped: {'00-19': 0.62, '20-39': 1.31, '40-59': 1.26}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 1.16, Acc grouped: {'00-19': 0.62, '20-39': 1.31, '40-59': 0.95, '60-79': 1.77}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 4.19, Acc grouped: {'00-19': 4.19}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 1.91, Acc grouped: {'00-19': 1.71, '20-39': 2.13}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 1.06, Acc grouped: {'00-19': 0.62, '20-39': 1.31, '40-59': 1.26}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 1.16, Acc grouped: {'00-19': 0.62, '20-39': 1.31, '40-59': 0.95, '60-79': 1.77}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 0.8, Acc grouped: {'00-19': 0.78, '20-39': 0.98, '40-59': 0.63, '60-79': 1.13, '80-99': 0.55}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 0.69, Acc grouped: {'00-19': 0.47, '20-39': 0.98, '40-59': 0.63, '60-79': 1.13, '80-99': 0.55, '100-119': 0.37}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 0.51, Acc grouped: {'00-19': 0.47, '20-39': 0.66, '40-59': 0.47, '60-79': 1.13, '80-99': 0.41, '100-119': 0.19, '120-139': 0.19}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 0.51, Acc grouped: {'00-19': 0.31, '20-39': 0.66, '40-59': 0.47, '60-79': 1.13, '80-99': 0.41, '100-119': 0.19, '120-139': 0.19, '140-159': 0.69}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 0.38, Acc grouped: {'00-19': 0.0, '20-39': 0.49, '40-59': 0.47, '60-79': 1.13, '80-99': 0.28, '100-119': 0.19, '120-139': 0.19, '140-159': 0.52, '160-179': 0.16}
+Loss nan, Train_acc 0.00, Test_acc 0.00
+Acc total: 0.38, Acc grouped: {'00-19': 0.0, '20-39': 0.49, '40-59': 0.47, '60-79': 0.97, '80-99': 0.28, '100-119': 0.19, '120-139': 0.19, '140-159': 0.35, '160-179': 0.0, '180-199': 0.95}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.044, Train_acc 28.74, Test_acc 49.38
+Loss 0.057, Train_acc 10.38, Test_acc 0.00
+Loss 0.064, Train_acc 5.92, Test_acc 0.16
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.044, Train_acc 28.74, Test_acc 49.38
+Loss 0.057, Train_acc 10.38, Test_acc 0.00
+Loss 0.064, Train_acc 5.92, Test_acc 0.16
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.044, Train_acc 28.74, Test_acc 49.38
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.044, Train_acc 28.74, Test_acc 49.38
+Loss 0.057, Train_acc 10.38, Test_acc 0.00
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.037, Train_acc 80.62, Test_acc 80.90
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.037, Train_acc 80.62, Test_acc 80.90
+Loss 0.052, Train_acc 38.92, Test_acc 40.82
+Loss 0.065, Train_acc 0.00, Test_acc 0.00
+Loss 0.070, Train_acc 0.00, Test_acc 0.00
+Loss 0.071, Train_acc 5.65, Test_acc 5.52
+Loss 0.076, Train_acc 0.04, Test_acc 0.00
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.035, Train_acc 87.36, Test_acc 90.06
+Loss 0.052, Train_acc 42.55, Test_acc 42.79
+Loss 0.065, Train_acc 0.00, Test_acc 0.00
+Loss 0.069, Train_acc 5.34, Test_acc 6.12
+Loss 0.071, Train_acc 8.06, Test_acc 7.72
+Loss 0.075, Train_acc 6.66, Test_acc 7.12
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 20 | merge_lambda: 50.0
+Loss 0.036, Train_acc 82.61, Test_acc 83.85
+Loss 0.035, Train_acc 85.26, Test_acc 90.49
+Loss 0.036, Train_acc 79.41, Test_acc 84.54
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 20 | merge_lambda: 50.0
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 1.0
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+Acc total: 3.26, Acc grouped: {'00-19': 3.26}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+Acc total: 3.26, Acc grouped: {'00-19': 3.26}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 1 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.045, Train_acc 27.65, Test_acc 46.43
+Acc total: 3.26, Acc grouped: {'00-19': 3.26}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.036, Train_acc 82.61, Test_acc 83.85
+Acc total: 2.02, Acc grouped: {'00-19': 2.02}
+Loss 0.035, Train_acc 84.39, Test_acc 88.52
+Acc total: 1.36, Acc grouped: {'00-19': 0.62, '20-39': 2.13}
+Loss 0.037, Train_acc 74.88, Test_acc 76.97
+Acc total: 1.75, Acc grouped: {'00-19': 0.62, '20-39': 0.98, '40-59': 3.63}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.036, Train_acc 82.61, Test_acc 83.85
+
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.036, Train_acc 82.61, Test_acc 83.85
+Acc total: 83.85, Acc grouped: {'00-19': 83.85}
+Loss 0.035, Train_acc 84.39, Test_acc 88.52
+Acc total: 79.43, Acc grouped: {'00-19': 75.47, '20-39': 83.61}
+Loss 0.037, Train_acc 74.88, Test_acc 76.97
+Acc total: 75.21, Acc grouped: {'00-19': 77.02, '20-39': 78.03, '40-59': 70.66}
+Loss 0.036, Train_acc 84.87, Test_acc 86.15
+Acc total: 73.65, Acc grouped: {'00-19': 73.45, '20-39': 76.39, '40-59': 67.82, '60-79': 77.13}
+Loss 0.035, Train_acc 87.64, Test_acc 90.07
+Acc total: 73.59, Acc grouped: {'00-19': 72.52, '20-39': 75.41, '40-59': 64.98, '60-79': 73.59, '80-99': 80.55}
+Loss 0.036, Train_acc 81.03, Test_acc 85.39
+Acc total: 72.85, Acc grouped: {'00-19': 72.05, '20-39': 73.44, '40-59': 64.67, '60-79': 74.56, '80-99': 76.97, '100-119': 75.28}
+Loss 0.037, Train_acc 76.27, Test_acc 78.40
+Acc total: 69.38, Acc grouped: {'00-19': 71.74, '20-39': 72.46, '40-59': 63.25, '60-79': 71.66, '80-99': 75.72, '100-119': 72.1, '120-139': 55.84}
+Loss 0.036, Train_acc 85.56, Test_acc 87.39
+Acc total: 69.78, Acc grouped: {'00-19': 70.96, '20-39': 72.62, '40-59': 63.88, '60-79': 71.82, '80-99': 74.76, '100-119': 73.22, '120-139': 53.89, '140-159': 74.44}
+Loss 0.035, Train_acc 83.75, Test_acc 84.39
+Acc total: 68.75, Acc grouped: {'00-19': 69.41, '20-39': 70.66, '40-59': 62.46, '60-79': 70.05, '80-99': 74.34, '100-119': 72.47, '120-139': 53.7, '140-159': 72.71, '160-179': 70.41}
+Loss 0.035, Train_acc 88.12, Test_acc 89.31
+Acc total: 68.18, Acc grouped: {'00-19': 69.25, '20-39': 71.48, '40-59': 62.62, '60-79': 71.01, '80-99': 69.93, '100-119': 72.66, '120-139': 53.7, '140-159': 72.71, '160-179': 66.67, '180-199': 70.42}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 0.5
+Loss 0.036, Train_acc 82.61, Test_acc 83.85
+Acc total: 80.28, Acc grouped: {'00-19': 80.28}
+Loss 0.035, Train_acc 84.39, Test_acc 88.52
+Acc total: 79.82, Acc grouped: {'00-19': 80.75, '20-39': 78.85}
+Loss 0.037, Train_acc 74.88, Test_acc 76.97
+Acc total: 75.11, Acc grouped: {'00-19': 77.33, '20-39': 77.87, '40-59': 70.19}
+Loss 0.036, Train_acc 84.87, Test_acc 86.15
+Acc total: 73.89, Acc grouped: {'00-19': 74.53, '20-39': 77.05, '40-59': 68.3, '60-79': 75.85}
+Loss 0.035, Train_acc 87.64, Test_acc 90.07
+Acc total: 73.9, Acc grouped: {'00-19': 72.36, '20-39': 75.41, '40-59': 65.77, '60-79': 75.68, '80-99': 79.59}
+Loss 0.036, Train_acc 81.03, Test_acc 85.39
+Acc total: 72.8, Acc grouped: {'00-19': 72.36, '20-39': 73.77, '40-59': 65.14, '60-79': 73.11, '80-99': 77.38, '100-119': 74.72}
+Loss 0.037, Train_acc 76.27, Test_acc 78.40
+Acc total: 70.15, Acc grouped: {'00-19': 72.2, '20-39': 73.93, '40-59': 64.98, '60-79': 72.14, '80-99': 76.0, '100-119': 72.85, '120-139': 56.03}
+Loss 0.036, Train_acc 85.56, Test_acc 87.39
+Acc total: 69.8, Acc grouped: {'00-19': 71.58, '20-39': 72.79, '40-59': 63.72, '60-79': 71.34, '80-99': 75.31, '100-119': 72.66, '120-139': 54.47, '140-159': 73.75}
+Loss 0.035, Train_acc 83.75, Test_acc 84.39
+Acc total: 69.16, Acc grouped: {'00-19': 70.5, '20-39': 72.3, '40-59': 62.62, '60-79': 70.69, '80-99': 75.03, '100-119': 72.85, '120-139': 53.7, '140-159': 72.71, '160-179': 69.27}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 2.0
+Loss 0.036, Train_acc 82.61, Test_acc 83.85
+Acc total: 75.78, Acc grouped: {'00-19': 75.78}
+Loss 0.035, Train_acc 84.39, Test_acc 88.52
+Acc total: 57.42, Acc grouped: {'00-19': 52.02, '20-39': 63.11}
+Loss 0.037, Train_acc 74.88, Test_acc 76.97
+Acc total: 58.21, Acc grouped: {'00-19': 72.52, '20-39': 48.36, '40-59': 53.15}
+Loss 0.036, Train_acc 84.87, Test_acc 86.15
+Acc total: 44.24, Acc grouped: {'00-19': 34.78, '20-39': 50.98, '40-59': 44.32, '60-79': 47.34}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.036, Train_acc 82.61, Test_acc 83.85
+Acc total: 83.85, Acc grouped: {'00-19': 83.85}
+Loss 0.035, Train_acc 84.39, Test_acc 88.52
+Acc total: 80.78, Acc grouped: {'00-19': 80.75, '20-39': 80.82}
+Loss 0.037, Train_acc 74.88, Test_acc 76.97
+Acc total: 75.48, Acc grouped: {'00-19': 77.64, '20-39': 78.69, '40-59': 70.19}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.036, Train_acc 82.61, Test_acc 83.85
+Acc total: 83.85, Acc grouped: {'00-19': 83.85}
+Loss 0.035, Train_acc 84.39, Test_acc 88.52
+Acc total: 74.96, Acc grouped: {'00-19': 75.31, '20-39': 74.59}
+Loss 0.037, Train_acc 74.88, Test_acc 76.97
+Acc total: 69.7, Acc grouped: {'00-19': 71.27, '20-39': 70.0, '40-59': 67.82}
+Loss 0.036, Train_acc 84.87, Test_acc 86.15
+Acc total: 66.52, Acc grouped: {'00-19': 67.55, '20-39': 65.74, '40-59': 63.09, '60-79': 69.73}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 10 | merge_trim_top_k: 100 | merge_lambda: 1.0
+Loss 0.037, Train_acc 78.24, Test_acc 80.75
+Acc total: 80.75, Acc grouped: {'00-19': 80.75}
+Loss 0.036, Train_acc 78.29, Test_acc 83.61
+Acc total: 72.41, Acc grouped: {'00-19': 72.83, '20-39': 71.97}
+Loss 0.035, Train_acc 83.37, Test_acc 89.12
+Acc total: 68.49, Acc grouped: {'00-19': 67.7, '20-39': 65.25, '40-59': 72.4}
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 20 | merge_trim_top_k: 20 | merge_lambda: 1.0
+Loss 0.036, Train_acc 85.14, Test_acc 86.34
+Acc total: 85.87, Acc grouped: {'00-19': 85.87}
+Loss 0.035, Train_acc 84.43, Test_acc 89.34
+Acc total: 79.98, Acc grouped: {'00-19': 81.37, '20-39': 78.52}
+
+
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 50 | merge_trim_top_k: 20 | merge_lambda: 1.0
+Loss 0.035, Train_acc 86.23, Test_acc 86.18
+Acc total: 85.87, Acc grouped: {'00-19': 85.87}
+Loss 0.034, Train_acc 91.10, Test_acc 90.66
+Acc total: 81.74, Acc grouped: {'00-19': 81.37, '20-39': 82.13}
+Loss 0.034, Train_acc 91.47, Test_acc 92.11
+Acc total: 77.86, Acc grouped: {'00-19': 77.48, '20-39': 77.7, '40-59': 78.39}
+Loss 0.035, Train_acc 88.47, Test_acc 88.41
+Acc total: 74.93, Acc grouped: {'00-19': 75.16, '20-39': 74.26, '40-59': 75.39, '60-79': 74.88}
+Loss 0.034, Train_acc 91.41, Test_acc 91.31
+Acc total: 72.54, Acc grouped: {'00-19': 71.89, '20-39': 70.82, '40-59': 71.14, '60-79': 73.27, '80-99': 75.17}
+Loss 0.034, Train_acc 92.69, Test_acc 92.88
+Acc total: 71.07, Acc grouped: {'00-19': 69.88, '20-39': 68.2, '40-59': 69.24, '60-79': 70.69, '80-99': 72.0, '100-119': 77.15}
+Loss 0.035, Train_acc 91.97, Test_acc 93.19
+Acc total: 68.4, Acc grouped: {'00-19': 68.32, '20-39': 66.56, '40-59': 68.3, '60-79': 67.95, '80-99': 71.03, '100-119': 76.59, '120-139': 59.14}
+Loss 0.034, Train_acc 92.97, Test_acc 93.61
+Acc total: 67.23, Acc grouped: {'00-19': 66.46, '20-39': 64.26, '40-59': 67.67, '60-79': 66.34, '80-99': 69.52, '100-119': 75.09, '120-139': 57.59, '140-159': 70.12}
+
+fine_tune_train_batch_size: 64 | fine_tune_train_epochs: 50 | merge_trim_top_k: 20 | merge_lambda: 1.0
+Loss 0.035, Train_acc 86.23, Test_acc 86.18
+Acc total: 85.87, Acc grouped: {'00-19': 85.87}
+Loss 0.034, Train_acc 91.10, Test_acc 90.66
+Acc total: 83.57, Acc grouped: {'00-19': 83.39, '20-39': 83.77}
+Loss 0.034, Train_acc 91.47, Test_acc 92.11
+Acc total: 81.78, Acc grouped: {'00-19': 81.06, '20-39': 82.3, '40-59': 82.02}
+Loss 0.035, Train_acc 88.47, Test_acc 88.41
+Acc total: 78.52, Acc grouped: {'00-19': 78.11, '20-39': 77.21, '40-59': 78.71, '60-79': 80.03}
+Loss 0.034, Train_acc 91.41, Test_acc 91.31
+Acc total: 75.54, Acc grouped: {'00-19': 74.69, '20-39': 73.93, '40-59': 71.61, '60-79': 77.94, '80-99': 79.03}
+Loss 0.034, Train_acc 92.69, Test_acc 92.88
+Acc total: 74.97, Acc grouped: {'00-19': 74.07, '20-39': 71.48, '40-59': 70.03, '60-79': 76.97, '80-99': 77.79, '100-119': 79.78}
+Loss 0.035, Train_acc 91.97, Test_acc 93.19
+Acc total: 73.38, Acc grouped: {'00-19': 72.98, '20-39': 70.98, '40-59': 69.72, '60-79': 75.2, '80-99': 76.41, '100-119': 79.59, '120-139': 68.29}
+Loss 0.034, Train_acc 92.97, Test_acc 93.61
+Acc total: 72.87, Acc grouped: {'00-19': 72.67, '20-39': 68.69, '40-59': 68.45, '60-79': 73.75, '80-99': 76.14, '100-119': 79.59, '120-139': 65.18, '140-159': 77.89}
+Loss 0.034, Train_acc 92.34, Test_acc 92.20
+Acc total: 72.06, Acc grouped: {'00-19': 72.2, '20-39': 66.56, '40-59': 67.19, '60-79': 73.91, '80-99': 75.17, '100-119': 79.4, '120-139': 63.81, '140-159': 75.82, '160-179': 73.82}
+Loss 0.034, Train_acc 91.66, Test_acc 92.18
+Acc total: 71.2, Acc grouped: {'00-19': 71.58, '20-39': 67.38, '40-59': 67.35, '60-79': 72.46, '80-99': 71.59, '100-119': 79.4, '120-139': 63.42, '140-159': 75.47, '160-179': 74.31, '180-199': 68.7}
+
+# mag merge & avg merge
+Loss 0.037, Train_acc 75.61, Test_acc 76.05
+Acc total: 76.2, Acc grouped: {'00-19': 76.2}
+=====================================
+
+Loss 0.037, Train_acc 77.28, Test_acc 75.00
+Acc total: 70.55, Acc grouped: {'00-19': 71.26, '20-39': 69.78}
+=====================================
+
+Loss 0.036, Train_acc 83.57, Test_acc 84.65
+Acc total: 69.07, Acc grouped: {'00-19': 70.25, '20-39': 67.56, '40-59': 69.31}
+=====================================
+
+Loss 0.037, Train_acc 72.48, Test_acc 72.33
+Acc total: 66.25, Acc grouped: {'00-19': 68.8, '20-39': 66.61, '40-59': 68.32, '60-79': 60.6}
+=====================================
+
+Loss 0.038, Train_acc 67.95, Test_acc 63.86
+Acc total: 62.01, Acc grouped: {'00-19': 67.49, '20-39': 65.03, '40-59': 66.34, '60-79': 59.72, '80-99': 47.64}
+=====================================
+
+Loss 0.036, Train_acc 80.34, Test_acc 82.58
+Acc total: 61.43, Acc grouped: {'00-19': 66.18, '20-39': 63.45, '40-59': 65.02, '60-79': 56.22, '80-99': 45.79, '100-119': 67.27}
+=====================================
+
+Loss 0.037, Train_acc 80.84, Test_acc 79.09
+Acc total: 60.84, Acc grouped: {'00-19': 65.6, '20-39': 62.34, '40-59': 64.52, '60-79': 55.69, '80-99': 44.35, '100-119': 66.36, '120-139': 62.39}
+=====================================
+
+Loss 0.036, Train_acc 78.44, Test_acc 80.25
+Acc total: 60.39, Acc grouped: {'00-19': 64.3, '20-39': 60.92, '40-59': 64.03, '60-79': 54.99, '80-99': 43.94, '100-119': 64.85, '120-139': 62.04, '140-159': 63.1}
+=====================================
+
+Loss 0.037, Train_acc 74.18, Test_acc 76.57
+Acc total: 59.36, Acc grouped: {'00-19': 62.41, '20-39': 60.76, '40-59': 63.86, '60-79': 53.94, '80-99': 43.53, '100-119': 64.55, '120-139': 61.69, '140-159': 62.69, '160-179': 55.02}
+=====================================
+
+Loss 0.037, Train_acc 76.52, Test_acc 77.03
+Acc total: 58.3, Acc grouped: {'00-19': 61.68, '20-39': 58.7, '40-59': 62.21, '60-79': 53.24, '80-99': 43.12, '100-119': 63.18, '120-139': 60.81, '140-159': 62.14, '160-179': 53.97, '180-199': 58.2}
+=====================================
+
+# ties_merge
+Loss 0.037, Train_acc 75.61, Test_acc 76.05
+Acc total: 75.91, Acc grouped: {'00-19': 75.91}
+=====================================
+
+Loss 0.037, Train_acc 77.28, Test_acc 75.00
+Acc total: 70.48, Acc grouped: {'00-19': 71.12, '20-39': 69.78}
+=====================================
+
+Loss 0.036, Train_acc 83.57, Test_acc 84.65
+Acc total: 68.97, Acc grouped: {'00-19': 70.1, '20-39': 67.41, '40-59': 69.31}
+=====================================
+
+Loss 0.037, Train_acc 72.48, Test_acc 72.33
+Acc total: 66.09, Acc grouped: {'00-19': 68.65, '20-39': 66.61, '40-59': 68.15, '60-79': 60.25}
+=====================================
+
+Loss 0.038, Train_acc 67.95, Test_acc 63.86
+Acc total: 61.94, Acc grouped: {'00-19': 67.63, '20-39': 65.03, '40-59': 66.17, '60-79': 59.37, '80-99': 47.64}
+=====================================
+
+Loss 0.036, Train_acc 80.34, Test_acc 82.58
+Acc total: 61.4, Acc grouped: {'00-19': 66.18, '20-39': 63.61, '40-59': 65.02, '60-79': 55.87, '80-99': 45.59, '100-119': 67.42}
+=====================================
+
+Loss 0.037, Train_acc 80.84, Test_acc 79.09
+Acc total: 60.8, Acc grouped: {'00-19': 65.6, '20-39': 62.34, '40-59': 64.52, '60-79': 55.34, '80-99': 44.35, '100-119': 66.52, '120-139': 62.21}
+=====================================
+
+Loss 0.036, Train_acc 78.44, Test_acc 80.25
+Acc total: 60.37, Acc grouped: {'00-19': 64.44, '20-39': 61.08, '40-59': 64.03, '60-79': 54.82, '80-99': 43.74, '100-119': 65.0, '120-139': 61.86, '140-159': 62.96}
+=====================================
+
+Loss 0.037, Train_acc 74.18, Test_acc 76.57
+Acc total: 59.34, Acc grouped: {'00-19': 62.41, '20-39': 60.92, '40-59': 63.86, '60-79': 53.59, '80-99': 43.53, '100-119': 64.7, '120-139': 61.51, '140-159': 62.69, '160-179': 55.02}
+=====================================
+
+Loss 0.037, Train_acc 76.52, Test_acc 77.03
+Acc total: 58.33, Acc grouped: {'00-19': 61.83, '20-39': 58.7, '40-59': 62.38, '60-79': 52.89, '80-99': 43.12, '100-119': 63.33, '120-139': 60.98, '140-159': 62.0, '160-179': 53.97, '180-199': 58.38}
+=====================================
+
+# pure backbone
+Loss 0.037, Train_acc 75.68, Test_acc 75.62
+Acc total: 75.62, Acc grouped: {'00-19': 75.62}
+=====================================
+
+Loss 0.037, Train_acc 80.09, Test_acc 78.64
+Acc total: 71.76, Acc grouped: {'00-19': 72.42, '20-39': 71.04}
+=====================================
+
+Loss 0.036, Train_acc 83.57, Test_acc 84.32
+Acc total: 70.16, Acc grouped: {'00-19': 71.55, '20-39': 68.35, '40-59': 70.46}
+=====================================
+
+Loss 0.037, Train_acc 72.48, Test_acc 72.68
+Acc total: 67.09, Acc grouped: {'00-19': 70.1, '20-39': 67.25, '40-59': 68.98, '60-79': 61.3}
+=====================================
+
+Loss 0.038, Train_acc 68.00, Test_acc 64.07
+Acc total: 62.58, Acc grouped: {'00-19': 68.94, '20-39': 65.19, '40-59': 66.5, '60-79': 59.89, '80-99': 48.46}
+=====================================
+
+Loss 0.036, Train_acc 80.34, Test_acc 82.58
+Acc total: 61.92, Acc grouped: {'00-19': 67.63, '20-39': 62.82, '40-59': 65.35, '60-79': 56.57, '80-99': 46.2, '100-119': 68.18}
+=====================================
+
+Loss 0.037, Train_acc 80.89, Test_acc 79.26
+Acc total: 61.53, Acc grouped: {'00-19': 67.05, '20-39': 61.71, '40-59': 65.02, '60-79': 56.04, '80-99': 44.97, '100-119': 67.58, '120-139': 63.62}
+=====================================
+
+Loss 0.036, Train_acc 78.59, Test_acc 79.84
+Acc total: 60.89, Acc grouped: {'00-19': 65.6, '20-39': 60.13, '40-59': 64.36, '60-79': 55.17, '80-99': 44.56, '100-119': 65.45, '120-139': 63.09, '140-159': 63.79}
+=====================================
+
+Loss 0.037, Train_acc 74.90, Test_acc 77.62
+Acc total: 59.97, Acc grouped: {'00-19': 63.57, '20-39': 60.13, '40-59': 64.03, '60-79': 54.29, '80-99': 44.35, '100-119': 65.15, '120-139': 62.92, '140-159': 63.65, '160-179': 55.86}
+=====================================
+
+Loss 0.037, Train_acc 76.12, Test_acc 77.03
+Acc total: 58.62, Acc grouped: {'00-19': 62.55, '20-39': 57.28, '40-59': 62.54, '60-79': 53.59, '80-99': 43.94, '100-119': 63.33, '120-139': 61.86, '140-159': 62.83, '160-179': 54.6, '180-199': 58.03}
+=====================================
+
+# ties_merge, vit_ssf
+Loss 0.035, Train_acc 85.38, Test_acc 88.24
+Acc total: 87.81, Acc grouped: {'00-19': 87.81}
+=====================================
+
+Loss 0.038, Train_acc 67.84, Test_acc 70.41
+Acc total: 74.19, Acc grouped: {'00-19': 79.83, '20-39': 68.04}
+=====================================
+
+Loss 0.036, Train_acc 80.84, Test_acc 85.81
+Acc total: 73.64, Acc grouped: {'00-19': 79.1, '20-39': 67.25, '40-59': 74.09}
+=====================================
+
+Loss 0.035, Train_acc 83.69, Test_acc 89.14
+Acc total: 73.06, Acc grouped: {'00-19': 76.63, '20-39': 66.61, '40-59': 71.12, '60-79': 77.93}
+=====================================
+
+Loss 0.037, Train_acc 74.16, Test_acc 73.31
+Acc total: 69.41, Acc grouped: {'00-19': 74.17, '20-39': 65.66, '40-59': 69.14, '60-79': 77.23, '80-99': 58.73}
+=====================================
+
+Loss 0.035, Train_acc 84.50, Test_acc 89.85
+Acc total: 69.68, Acc grouped: {'00-19': 72.86, '20-39': 64.87, '40-59': 67.82, '60-79': 75.48, '80-99': 57.7, '100-119': 76.52}
+=====================================
+
+Loss 0.038, Train_acc 73.31, Test_acc 74.69
+Acc total: 66.59, Acc grouped: {'00-19': 72.13, '20-39': 64.24, '40-59': 67.66, '60-79': 74.96, '80-99': 56.06, '100-119': 75.45, '120-139': 51.67}
+=====================================
+
+Loss 0.035, Train_acc 83.77, Test_acc 86.15
+Acc total: 66.6, Acc grouped: {'00-19': 70.25, '20-39': 63.13, '40-59': 66.83, '60-79': 73.91, '80-99': 55.24, '100-119': 73.79, '120-139': 51.85, '140-159': 72.84}
+=====================================
+
+Loss 0.037, Train_acc 77.67, Test_acc 79.50
+Acc total: 65.12, Acc grouped: {'00-19': 68.36, '20-39': 62.34, '40-59': 65.68, '60-79': 72.33, '80-99': 54.83, '100-119': 72.88, '120-139': 51.49, '140-159': 73.25, '160-179': 58.37}
+=====================================
+
+Loss 0.036, Train_acc 83.66, Test_acc 85.84
+Acc total: 64.52, Acc grouped: {'00-19': 67.78, '20-39': 62.34, '40-59': 65.18, '60-79': 71.98, '80-99': 54.62, '100-119': 71.97, '120-139': 49.91, '140-159': 72.57, '160-179': 57.32, '180-199': 64.94}
+=====================================
+
+Sequential finetuning for 1 epochs only
+Before task 0 =====
+Model(trainable_params=221184, total_params=86019840, percentage=0.26)
+Loss 0.027, Train_acc 67.55: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:17<00:00, 17.91s/it]
+6it [00:03,  1.72it/s]
+Acc total: 84.76, Acc grouped: {'00-19': 84.76}
+Model(trainable_params=221184, total_params=86035200, percentage=0.26)
+=====================================
+
+Before task 1 =====
+Model(trainable_params=221184, total_params=86035200, percentage=0.26)
+Loss 0.022, Train_acc 67.02: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:16<00:00, 16.31s/it]
+11it [00:05,  2.07it/s]
+Acc total: 81.3, Acc grouped: {'00-19': 81.57, '20-39': 81.01}
+Model(trainable_params=221184, total_params=86050560, percentage=0.26)
+=====================================
+
+Before task 2 =====
+Model(trainable_params=221184, total_params=86050560, percentage=0.26)
+Loss 0.019, Train_acc 65.60: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:15<00:00, 15.01s/it]
+16it [00:07,  2.26it/s]
+Acc total: 81.68, Acc grouped: {'00-19': 83.02, '20-39': 81.17, '40-59': 80.69}
+Model(trainable_params=221184, total_params=86065920, percentage=0.26)
+=====================================
+
+Before task 3 =====
+Model(trainable_params=221184, total_params=86065920, percentage=0.26)
+Loss 0.017, Train_acc 68.34: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:14<00:00, 14.64s/it]
+20it [00:08,  2.30it/s]
+Acc total: 78.06, Acc grouped: {'00-19': 76.63, '20-39': 80.22, '40-59': 77.06, '60-79': 78.46}
+Model(trainable_params=221184, total_params=86081280, percentage=0.26)
+=====================================
+
+Before task 4 =====
+Model(trainable_params=221184, total_params=86081280, percentage=0.26)
+Loss 0.018, Train_acc 66.53: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:13<00:00, 13.99s/it]
+24it [00:10,  2.37it/s]
+Acc total: 76.38, Acc grouped: {'00-19': 74.89, '20-39': 79.91, '40-59': 75.08, '60-79': 77.76, '80-99': 73.92}
+Model(trainable_params=221184, total_params=86096640, percentage=0.26)
+=====================================
+
+Before task 5 =====
+Model(trainable_params=221184, total_params=86096640, percentage=0.26)
+Loss 0.015, Train_acc 72.68: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:17<00:00, 17.15s/it]
+29it [00:12,  2.38it/s]
+Acc total: 76.24, Acc grouped: {'00-19': 74.46, '20-39': 77.85, '40-59': 76.4, '60-79': 73.91, '80-99': 71.25, '100-119': 82.12}
+Model(trainable_params=221184, total_params=86112000, percentage=0.26)
+=====================================
+
+Before task 6 =====
+Model(trainable_params=221184, total_params=86112000, percentage=0.26)
+Loss 0.018, Train_acc 67.94: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:13<00:00, 13.66s/it]
+33it [00:13,  2.40it/s]
+Acc total: 75.11, Acc grouped: {'00-19': 73.58, '20-39': 77.53, '40-59': 73.1, '60-79': 73.56, '80-99': 70.64, '100-119': 79.39, '120-139': 76.8}
+Model(trainable_params=221184, total_params=86127360, percentage=0.26)
+=====================================
+
+Before task 7 =====
+Model(trainable_params=221184, total_params=86127360, percentage=0.26)
+Loss 0.015, Train_acc 71.48: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:17<00:00, 17.87s/it]
+39it [00:15,  2.47it/s]
+Acc total: 75.22, Acc grouped: {'00-19': 70.54, '20-39': 77.06, '40-59': 73.6, '60-79': 73.73, '80-99': 69.82, '100-119': 79.55, '120-139': 75.22, '140-159': 80.25}
+Model(trainable_params=221184, total_params=86142720, percentage=0.26)
+=====================================
+
+Before task 8 =====
+Model(trainable_params=221184, total_params=86142720, percentage=0.26)
+Loss 0.019, Train_acc 65.04: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:12<00:00, 12.67s/it]
+43it [00:17,  2.50it/s]
+Acc total: 74.54, Acc grouped: {'00-19': 70.54, '20-39': 77.53, '40-59': 70.96, '60-79': 74.26, '80-99': 68.79, '100-119': 77.73, '120-139': 75.04, '140-159': 79.84, '160-179': 74.06}
+Model(trainable_params=221184, total_params=86158080, percentage=0.26)
+=====================================
+
+Before task 9 =====
+Model(trainable_params=221184, total_params=86158080, percentage=0.26)
+Loss 0.015, Train_acc 71.59: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:14<00:00, 14.63s/it]
+47it [00:18,  2.49it/s]
+Acc total: 73.03, Acc grouped: {'00-19': 69.81, '20-39': 75.0, '40-59': 68.48, '60-79': 72.33, '80-99': 68.17, '100-119': 72.88, '120-139': 73.99, '140-159': 78.46, '160-179': 73.43, '180-199': 76.34}
+Model(trainable_params=221184, total_params=86173440, percentage=0.26)
+=====================================
+
+Sequential finetune peft ssf for 10 epochs
+Before task 0 =====
+Model(trainable_params=221184, total_params=86019840, percentage=0.26)
+Loss 0.004, Train_acc 92.40: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [02:57<00:00, 17.75s/it]
+6it [00:03,  1.73it/s]
+Acc total: 94.34, Acc grouped: {'00-19': 94.34}
+Model(trainable_params=221184, total_params=86035200, percentage=0.26)
+=====================================
+
+Before task 1 =====
+Model(trainable_params=221184, total_params=86035200, percentage=0.26)
+Loss 0.005, Train_acc 89.77: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [02:44<00:00, 16.42s/it]
+11it [00:05,  2.08it/s]
+Acc total: 88.95, Acc grouped: {'00-19': 89.84, '20-39': 87.97}
+Model(trainable_params=221184, total_params=86050560, percentage=0.26)
+=====================================
+
+Before task 2 =====
+Model(trainable_params=221184, total_params=86050560, percentage=0.26)
+Loss 0.005, Train_acc 91.55: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [02:30<00:00, 15.09s/it]
+16it [00:07,  2.27it/s]
+Acc total: 87.03, Acc grouped: {'00-19': 89.26, '20-39': 84.97, '40-59': 86.63}
+Model(trainable_params=221184, total_params=86065920, percentage=0.26)
+=====================================
+
+Before task 3 =====
+Model(trainable_params=221184, total_params=86065920, percentage=0.26)
+Loss 0.005, Train_acc 91.54: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [02:27<00:00, 14.78s/it]
+20it [00:08,  2.30it/s]
+Acc total: 84.63, Acc grouped: {'00-19': 88.39, '20-39': 84.34, '40-59': 83.5, '60-79': 81.61}
+Model(trainable_params=221184, total_params=86081280, percentage=0.26)
+=====================================
+
+Before task 4 =====
+Model(trainable_params=221184, total_params=86081280, percentage=0.26)
+Loss 0.004, Train_acc 91.77: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [02:20<00:00, 14.08s/it]
+24it [00:10,  2.36it/s]
+Acc total: 81.91, Acc grouped: {'00-19': 87.95, '20-39': 83.07, '40-59': 80.03, '60-79': 78.46, '80-99': 78.23}
+Model(trainable_params=221184, total_params=86096640, percentage=0.26)
+=====================================
+
+Before task 5 =====
+Model(trainable_params=221184, total_params=86096640, percentage=0.26)
+Loss 0.004, Train_acc 92.08: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [02:50<00:00, 17.07s/it]
+29it [00:12,  2.40it/s]
+Acc total: 80.6, Acc grouped: {'00-19': 85.63, '20-39': 82.28, '40-59': 78.71, '60-79': 75.13, '80-99': 73.31, '100-119': 85.61}
+Model(trainable_params=221184, total_params=86112000, percentage=0.26)
+=====================================
+
+Before task 6 =====
+Model(trainable_params=221184, total_params=86112000, percentage=0.26)
+Loss 0.004, Train_acc 91.76: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [02:18<00:00, 13.81s/it]
+33it [00:13,  2.39it/s]
+Acc total: 79.4, Acc grouped: {'00-19': 83.89, '20-39': 78.96, '40-59': 77.23, '60-79': 75.83, '80-99': 72.48, '100-119': 81.36, '120-139': 84.01}
+Model(trainable_params=221184, total_params=86127360, percentage=0.26)
+=====================================
+
+Before task 7 =====
+Model(trainable_params=221184, total_params=86127360, percentage=0.26)
+Loss 0.004, Train_acc 93.32: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [03:00<00:00, 18.02s/it]
+39it [00:15,  2.46it/s]
+Acc total: 78.11, Acc grouped: {'00-19': 82.58, '20-39': 75.47, '40-59': 77.56, '60-79': 73.2, '80-99': 70.43, '100-119': 80.0, '120-139': 79.44, '140-159': 82.85}
+Model(trainable_params=221184, total_params=86142720, percentage=0.26)
+=====================================
+
+Before task 8 =====
+Model(trainable_params=221184, total_params=86142720, percentage=0.26)
+Loss 0.004, Train_acc 92.45: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [02:07<00:00, 12.75s/it]
+43it [00:17,  2.50it/s]
+Acc total: 77.02, Acc grouped: {'00-19': 82.29, '20-39': 75.0, '40-59': 75.58, '60-79': 72.5, '80-99': 68.38, '100-119': 77.73, '120-139': 78.73, '140-159': 81.62, '160-179': 78.03}
+Model(trainable_params=221184, total_params=86158080, percentage=0.26)
+=====================================
+
+Before task 9 =====
+Model(trainable_params=221184, total_params=86158080, percentage=0.26)
+Loss 0.004, Train_acc 92.33: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [02:26<00:00, 14.66s/it]
+47it [00:18,  2.48it/s]
+Acc total: 76.52, Acc grouped: {'00-19': 81.71, '20-39': 75.32, '40-59': 75.74, '60-79': 72.15, '80-99': 66.53, '100-119': 77.73, '120-139': 77.33, '140-159': 80.38, '160-179': 73.85, '180-199': 80.31}
+Model(trainable_params=221184, total_params=86173440, percentage=0.26)
+=====================================
+
+20 epochs SeqFT
+Before task 9 =====
+Model(trainable_params=221184, total_params=86158080, percentage=0.26)
+--- Task model: Model(trainable_params=221184, total_params=86019840, percentage=0.26)
+Loss 0.004, Train_acc 93.52: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 20/20 [04:53<00:00, 14.69s/it]
+47it [00:19,  2.46it/s]
+Acc total: 70.8, Acc grouped: {'00-19': 73.88, '20-39': 72.31, '40-59': 64.69, '60-79': 69.53, '80-99': 63.45, '100-119': 68.18, '120-139': 70.83, '140-159': 75.31, '160-179': 71.13, '180-199': 76.34}
+Model(trainable_params=221184, total_params=86173440, percentage=0.26)
+=====================================

@@ -11,6 +11,8 @@ from utils.toolkit import split_images_labels
 #        year = {2023}
 #    }
 
+data_root_path = "/media/ellen/datasets"
+
 class iData(object):
     train_trsf = []
     test_trsf = []
@@ -63,16 +65,64 @@ class iCIFAR224(iData):
 
     def download_data(self):
         do_download=True
-        if os.path.isfile('./data/cifar-100-python/train'):
+        if os.path.isfile(f"{data_root_path}/cifar-100-python/train"):
             do_download=False
-        train_dataset = datasets.cifar.CIFAR100("./data/", train=True, download=do_download)
-        test_dataset = datasets.cifar.CIFAR100("./data", train=False, download=False)
+        train_dataset = datasets.cifar.CIFAR100(f"{data_root_path}/", train=True, download=do_download)
+        test_dataset = datasets.cifar.CIFAR100(f"{data_root_path}", train=False, download=False)
         self.train_data, self.train_targets = train_dataset.data, np.array(
             train_dataset.targets
         )
         self.test_data, self.test_targets = test_dataset.data, np.array(
             test_dataset.targets
         )
+
+class iTinyImageNet(iData):
+    use_path = True
+    
+    train_trsf=build_transform(True, None)
+    test_trsf=build_transform(False, None)
+    common_trsf = [    ]
+
+    class_order = np.arange(200).tolist()
+
+    def __init__(self,use_input_norm):
+        if use_input_norm:
+            self.common_trsf = [transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]
+
+    def download_data(self):
+        train_dir = f"{data_root_path}/tiny-imagenet-200/train/"
+        test_dir = f"{data_root_path}/tiny-imagenet-200/test/"
+
+        train_dset = datasets.ImageFolder(train_dir)
+        test_dset = datasets.ImageFolder(test_dir)
+
+        self.train_data, self.train_targets = split_images_labels(train_dset.imgs)
+        self.test_data, self.test_targets = split_images_labels(test_dset.imgs)
+        
+
+class iPlaces365(iData):
+    use_path = True
+    
+    train_trsf=build_transform(True, None)
+    test_trsf=build_transform(False, None)
+    common_trsf = [    ]
+
+    class_order = np.arange(200).tolist()
+
+    def __init__(self,use_input_norm):
+        if use_input_norm:
+            self.common_trsf = [transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]
+
+    def download_data(self):
+        train_dir = f"{data_root_path}/places365_standard/train/"
+        test_dir = f"{data_root_path}/places365_standard/val/"
+
+        train_dset = datasets.ImageFolder(train_dir)
+        test_dset = datasets.ImageFolder(test_dir)
+
+        self.train_data, self.train_targets = split_images_labels(train_dset.imgs)
+        self.test_data, self.test_targets = split_images_labels(test_dset.imgs)
+
 
 class iImageNetR(iData):
     use_path = True
@@ -89,8 +139,8 @@ class iImageNetR(iData):
 
     def download_data(self):
         # as per Zhou et al (2023), download from https://drive.google.com/file/d/1SG4TbiL8_DooekztyCVK8mPmfhMo8fkR/view?usp=sharing) or Onedrive: [link](https://entuedu-my.sharepoint.com/:u:/g/personal/n2207876b_e_ntu_edu_sg/EU4jyLL29CtBsZkB6y-JSbgBzWF5YHhBAUz1Qw8qM2954A?e=hlWpNW
-        train_dir = "./data/imagenet-r/train/"
-        test_dir = "./data/imagenet-r/test/"
+        train_dir = f"{data_root_path}/imagenet-r/train/"
+        test_dir = f"{data_root_path}/imagenet-r/test/"
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
@@ -114,8 +164,8 @@ class iImageNetA(iData):
 
     def download_data(self):
         # as per Zhou et al (2023), download from  https://drive.google.com/file/d/19l52ua_vvTtttgVRziCZJjal0TPE9f2p/view?usp=sharing) or Onedrive: [link](https://entuedu-my.sharepoint.com/:u:/g/personal/n2207876b_e_ntu_edu_sg/ERYi36eg9b1KkfEplgFTW3gBg1otwWwkQPSml0igWBC46A?e=NiTUkL
-        train_dir = "./data/imagenet-a/train/"
-        test_dir = "./data/imagenet-a/test/"
+        train_dir = f"{data_root_path}/imagenet-a/train/"
+        test_dir = f"{data_root_path}/imagenet-a/test/"
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
@@ -138,8 +188,8 @@ class CUB(iData):
 
     def download_data(self):
         # as per Zhou et al (2023) download from https://drive.google.com/file/d/1XbUpnWpJPnItt5zQ6sHJnsjPncnNLvWb/view?usp=sharing) or Onedrive: [link](https://entuedu-my.sharepoint.com/:u:/g/personal/n2207876b_e_ntu_edu_sg/EVV4pT9VJ9pBrVs2x0lcwd0BlVQCtSrdbLVfhuajMry-lA?e=L6Wjsc
-        train_dir = "./data/cub/train/"
-        test_dir = "./data/cub/test/"
+        train_dir = f"{data_root_path}/cub/train/"
+        test_dir = f"{data_root_path}/cub/test/"
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
@@ -162,8 +212,8 @@ class omnibenchmark(iData):
 
     def download_data(self):
         # as per Zhou et al (2023), download from https://drive.google.com/file/d/1AbCP3zBMtv_TDXJypOCnOgX8hJmvJm3u/view?usp=sharing) or Onedrive: [link](https://entuedu-my.sharepoint.com/:u:/g/personal/n2207876b_e_ntu_edu_sg/EcoUATKl24JFo3jBMnTV2WcBwkuyBH0TmCAy6Lml1gOHJA?e=eCNcoA
-        train_dir = "./data/omnibenchmark/train/"
-        test_dir = "./data/omnibenchmark/test/"
+        train_dir = f"{data_root_path}/omnibenchmark/train/"
+        test_dir = f"{data_root_path}/omnibenchmark/test/"
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
@@ -186,8 +236,8 @@ class vtab(iData):
 
     def download_data(self):
         # as per Zhou et al (2013), download from https://drive.google.com/file/d/1xUiwlnx4k0oDhYi26KL5KwrCAya-mvJ_/view?usp=sharing) or Onedrive: [link](https://entuedu-my.sharepoint.com/:u:/g/personal/n2207876b_e_ntu_edu_sg/EQyTP1nOIH5PrfhXtpPgKQ8BlEFW2Erda1t7Kdi3Al-ePw?e=Yt4RnV
-        train_dir = "./data/vtab/train/"
-        test_dir = "./data/vtab/test/"
+        train_dir = f"{data_root_path}/vtab/train/"
+        test_dir = f"{data_root_path}/vtab/test/"
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
@@ -212,14 +262,22 @@ class cars(iData):
             self.common_trsf = [transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]
 
     def download_data(self):
-        train_dir = "./data/cars/train/"
-        test_dir = "./data/cars/test/"
+        # Following instruction from https://github.com/pytorch/vision/issues/7545 to download cars dataset
+        
+        # train_dir = f"{data_root_path}/cars/train/"
+        # test_dir = f"{data_root_path}/cars/test/"
 
-        train_dset = datasets.ImageFolder(train_dir)
-        test_dset = datasets.ImageFolder(test_dir)
+        # train_dset = datasets.ImageFolder(train_dir)
+        # test_dset = datasets.ImageFolder(test_dir)
 
-        self.train_data, self.train_targets = split_images_labels(train_dset.imgs)
-        self.test_data, self.test_targets = split_images_labels(test_dset.imgs)
+        # self.train_data, self.train_targets = split_images_labels(train_dset.imgs)
+        # self.test_data, self.test_targets = split_images_labels(test_dset.imgs)
+        
+        train_dataset = datasets.StanfordCars(f"{data_root_path}", split='train', download=False)
+        test_dataset = datasets.StanfordCars(f"{data_root_path}", split='test', download=False)
+        
+        self.train_data, self.train_targets = split_images_labels(train_dataset._samples)
+        self.test_data, self.test_targets = split_images_labels(test_dataset._samples)
         
 class core50(iData):
     use_path = True
@@ -237,9 +295,9 @@ class core50(iData):
 
     def download_data(self):
         #download from here: http://bias.csr.unibo.it/maltoni/download/core50/core50_imgs.npz
-        train_dir = "./data/core50_imgs/"+self.inc+"/"
+        train_dir = f"{data_root_path}/core50_imgs/"+self.inc+"/"
         #print(train_dir)
-        test_dir = "./data/core50_imgs/test_3_7_10/"
+        test_dir = f"{data_root_path}/core50_imgs/test_3_7_10/"
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
@@ -263,9 +321,9 @@ class cddb(iData):
 
     def download_data(self):
         #download from here: https://coral79.github.io/CDDB_web/
-        train_dir = "./data/CDDB/CDDB/"+self.inc+"/train/"
+        train_dir = f"{data_root_path}/CDDB/CDDB/"+self.inc+"/train/"
         #print(train_dir)
-        test_dir = "./data/CDDB/CDDB-hard_val/"
+        test_dir = f"{data_root_path}/CDDB/CDDB-hard_val/"
 
         train_dset = datasets.ImageFolder(train_dir)
         test_dset = datasets.ImageFolder(test_dir)
@@ -289,17 +347,17 @@ class domainnet(iData):
 
     def download_data(self):
         #download from http://ai.bu.edu/M3SDA/#dataset (use "cleaned version")
-        aa=np.loadtxt('./data/DomainNet/'+self.inc+'_train.txt',dtype='str')
-        self.train_data=np.array(['./data/DomainNet/'+x for x in aa[:,0]])
+        aa=np.loadtxt(f"{data_root_path}/DomainNet/"+self.inc+'_train.txt',dtype='str')
+        self.train_data=np.array([f"{data_root_path}/DomainNet/"+x for x in aa[:,0]])
         self.train_targets=np.array([int(x) for x in aa[:,1]])
 
         dil_tasks=['real','quickdraw','painting','sketch','infograph','clipart']
         files=[]
         labels=[]
         for task in dil_tasks:
-            aa=np.loadtxt('./data/DomainNet/'+task+'_test.txt',dtype='str')
+            aa=np.loadtxt(f"{data_root_path}/DomainNet/"+task+'_test.txt',dtype='str')
             files+=list(aa[:,0])
             labels+=list(aa[:,1])
-        self.test_data=np.array(['./data/DomainNet/'+x for x in files])
+        self.test_data=np.array([f"{data_root_path}/DomainNet/"+x for x in files])
         self.test_targets=np.array([int(x) for x in labels])
 
