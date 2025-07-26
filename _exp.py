@@ -607,6 +607,311 @@ class SimpleContinualLinear(nn.Module):
         return out
 
 
+import logging
+import timm
+from peft import LoraConfig, get_peft_model
+from easydict import EasyDict
+from petl import vision_transformer_ssf
+from petl import vision_transformer_adapter
+import numpy as np
+
+def setup_logger(log_file=f"logs/default.log"):
+    logger = logging.getLogger("my_logger")
+    logger.setLevel(logging.DEBUG)
+
+    logger.propagate = False
+
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.DEBUG)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+
+    file_formatter = logging.Formatter('%(asctime)s - %(message)s')
+    console_formatter = logging.Formatter("%(asctime)s [%(filename)s] => %(message)s")
+
+    file_handler.setFormatter(file_formatter)
+    console_handler.setFormatter(console_formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    return logger
+
+
+def get_backbone(config):
+    if "lora" in config["model_backbone"]:
+        if config["model_backbone"] == "vit_base_patch16_224_lora":
+            model = timm.create_model(
+                "vit_base_patch16_224", pretrained=True, num_classes=0
+            )
+        elif config["model_backbone"] == "vit_base_patch16_224_in21k_lora":
+            model = timm.create_model(
+                "vit_base_patch16_224_in21k", pretrained=True, num_classes=0
+            )
+        model.requires_grad_(False)
+        lora_config = LoraConfig(
+            r=16,
+            lora_alpha=16,
+            target_modules=["qkv"],
+            lora_dropout=0.0,
+            bias="none",
+            init_lora_weights="gaussian",
+        )
+        model = get_peft_model(model, lora_config)
+        return model
+    elif "adapter" in config["model_backbone"]:
+        tuning_config = EasyDict(
+            # AdaptFormer
+            ffn_adapt=True,
+            ffn_option="parallel",
+            ffn_adapter_layernorm_option="none",
+            ffn_adapter_init_option="lora",
+            ffn_adapter_scalar="0.1",
+            ffn_num=64,
+            d_model=768,
+            # VPT related
+            vpt_on=False,
+            vpt_num=0,
+        )
+        if config["model_backbone"] == "vit_base_patch16_224_adapter":
+            model = vision_transformer_adapter.vit_base_patch16_224_adapter(
+                num_classes=0,
+                global_pool=False,
+                drop_path_rate=0.0,
+                tuning_config=tuning_config,
+            )
+        elif config["model_backbone"] == "vit_base_patch16_224_in21k_adapter":
+            model = vision_transformer_adapter.vit_base_patch16_224_in21k_adapter(
+                num_classes=0,
+                global_pool=False,
+                drop_path_rate=0.0,
+                tuning_config=tuning_config,
+            )
+        return model
+    elif "ssf" in config["model_backbone"]:
+        if config["model_backbone"] == "vit_base_patch16_224_ssf":
+            model = timm.create_model(
+                "vit_base_patch16_224_ssf", pretrained=True, num_classes=0
+            )
+        elif config["model_backbone"] == "vit_base_patch16_224_in21k_ssf":
+            model = timm.create_model(
+                "vit_base_patch16_224_in21k_ssf", pretrained=True, num_classes=0
+            )
+
+        for name, param in model.named_parameters():
+            if "ssf_scale_" in name:
+                nn.init.ones_(param)
+            elif "ssf_shift_" in name:
+                nn.init.zeros_(param)
+            else:
+                param.requires_grad_(False)
+        return model
+
+from sklearn.cluster import KMeans
+from collections import OrderedDict
+
+class RandomReplayBuffer:
+    def __init__(self, capacity: int, decay=1.0):
+        self._capacity = capacity
+        self._buffer = []
+        self._weights = []
+        self._total_seen = 0
+        self._decay = decay
+
+    def add(self, x: torch.Tensor, z: torch.Tensor, y: torch.Tensor):
+        for i in range(y.size(0)):
+            self._total_seen += 1
+            entry = (x[i].cpu(), z[i].cpu(), y[i].cpu())
+
+            if len(self._buffer) < self._capacity:
+                self._buffer.append(entry)
+                self._weights.append(1.0)
+            else:
+                is_selected = random.random() < (self._capacity / self._total_seen)
+                if not is_selected:
+                    continue
+                
+                probs = torch.tensor(self._weights, dtype=torch.float32)
+                inv_probs = 1.0 / (probs + 1e-6)  # lower weight = higher chance
+                inv_probs = inv_probs / inv_probs.sum()
+
+                idx = torch.multinomial(inv_probs, 1).item()
+
+                # Replace if current candidate weight is greater than chosen entry
+                if 1.0 >= self._weights[idx]:
+                    self._buffer[idx] = entry
+                    self._weights[idx] = 1.0
+    
+    def update_weights(self):
+        if not self._buffer:
+            return
+        
+        self._weights = [w * self._decay for w in self._weights]
+
+    def sample(self, batch_size: int=32):
+        if not self._buffer:
+            return None
+        
+        weights_np = np.array(self._weights, dtype=np.float32)
+        probs = weights_np / weights_np.sum()
+        indices = np.random.choice(len(self._buffer), size=min(batch_size, len(self._buffer)), p=probs)
+        
+        xs, zs, ys = zip(*[self._buffer[i] for i in indices])
+        x_batch = torch.stack(xs)
+        z_batch = torch.stack(zs)
+        y_batch = torch.tensor(ys, dtype=torch.long)
+        return x_batch, z_batch, y_batch
+    
+    def __iter__(self, batch_size: int = 32):
+        random.shuffle(self._buffer)
+        for i in range(0, len(self._buffer), batch_size):
+            batch = self._buffer[i : i + batch_size]
+            x_batch = torch.stack([x for x, _, _ in batch])
+            z_batch = torch.stack([z for _, z, _ in batch])
+            y_batch = torch.tensor([y for _, _, y in batch], dtype=torch.long)
+            yield x_batch, z_batch, y_batch
+    
+    def split(self, K: int):
+        zs = torch.stack([z for _, z, _ in self._buffer])
+        kmeans = KMeans(n_clusters=K, random_state=0, n_init='auto')
+        labels = kmeans.fit_predict(zs.cpu().numpy())
+        
+        clustered_sets = [[] for _ in range(K)]
+        for idx, cluster_id in enumerate(labels):
+            clustered_sets[cluster_id].append(self._buffer[idx])
+        
+        return clustered_sets
+    
+    # def split_by_cluster_means(self, cluster_means: torch.Tensor):
+    #     """
+    #     Args:
+    #         cluster_means (torch.Tensor): shape (K, dim), list of cluster centers
+    #     """
+    #     zs = torch.stack([z for _, z, _ in self._buffer]).cuda()  # (N, dim)
+    #     cluster_means = cluster_means.cuda()  # (K, dim)
+
+    #     # Compute distance between each sample and each cluster center → (N, K)
+    #     distances = torch.cdist(zs, cluster_means, p=2)  # Euclidean distance
+
+    #     # Assign each sample to the nearest cluster
+    #     nearest_clusters = distances.argmin(dim=1)  # (N,)
+
+    #     clustered_sets = [[] for _ in range(len(cluster_means))]
+    #     for idx, cluster_id in enumerate(nearest_clusters.cpu().tolist()):
+    #         clustered_sets[cluster_id].append(self._buffer[idx])
+
+    #     return clustered_sets
+    
+    def split_by_cluster_means(self, cluster_means: torch.Tensor, cluster_labels: torch.Tensor):
+        """
+        Args:
+            cluster_means (torch.Tensor): (K, dim), cluster centers (prototypes)
+            cluster_labels (torch.Tensor): (K,), corresponding labels for each prototype
+        """
+        zs = torch.stack([z for _, z, _ in self._buffer]).cuda()  # (N, dim)
+        ys = torch.tensor([y.item() for _, _, y in self._buffer]).cuda()  # (N,)
+
+        cluster_means = cluster_means.cuda()
+        cluster_labels = cluster_labels.cuda()
+
+        clustered_sets = [[] for _ in range(len(cluster_means))]
+
+        # For each cluster (prototype label), select matching samples
+        for cluster_id, cluster_label in enumerate(cluster_labels):
+            mask = (ys == cluster_label)  # samples matching the prototype label
+            if mask.sum() == 0:
+                continue  # skip empty clusters
+
+            matched_indices = mask.nonzero(as_tuple=True)[0]
+
+            # Assign all samples with matching label to this cluster
+            for idx in matched_indices:
+                clustered_sets[cluster_id].append(self._buffer[idx.item()])
+
+        return clustered_sets
+
+    @property
+    def size(self):
+        return len(self._buffer)
+    
+    @property
+    def size_by_class(self):
+        class_counts = {}
+        for _, _, y in self._buffer:
+            y_value = y.item()
+            class_counts[y_value] = class_counts.get(y_value, 0) + 1
+        
+        # Sort by key and return OrderedDict
+        sorted_class_counts = OrderedDict(sorted(class_counts.items()))
+        return sorted_class_counts
+
+
+def trim(tensor, topk=100):
+    flattened = tensor.view(-1)
+    magnitudes = torch.abs(flattened)
+    num_keep = max(1, int(len(flattened) * topk / 100))
+    threshold = torch.topk(magnitudes, num_keep, largest=True, sorted=True).values[-1]
+    mask = magnitudes >= threshold
+    trimmed = torch.where(mask, flattened, torch.tensor(0.0, dtype=tensor.dtype))
+
+    gamma = torch.sign(trimmed)
+    mu = torch.abs(trimmed)
+
+    return (trimmed.view_as(tensor), gamma.view_as(tensor), mu.view_as(tensor))
+
+
+def merge_task_vectors(trimmed_task_vectors):
+    gamma_tvs = torch.stack([tv[1] for tv in trimmed_task_vectors], dim=0)
+    gamma = torch.sign(gamma_tvs.sum(dim=0))
+    mask = gamma_tvs == gamma
+    tau_tvs = torch.stack([tv[0] for tv in trimmed_task_vectors], dim=0)
+    mean_tvs = torch.where(mask, tau_tvs, torch.tensor(0.0, dtype=tau_tvs.dtype)).sum(
+        dim=0
+    ) / mask.sum(dim=0).clamp(min=1)
+
+    return mean_tvs
+
+
+def merge(base_params, tasks_params, method="ties", lamb=1.0, topk=100):
+    params = {}
+    for name in base_params:
+        base_tv = base_params[name].clone()
+        task_vectors = [task_params[name] for task_params in tasks_params]
+
+        tvs = [task_vectors[i] - base_tv for i in range(len(task_vectors))]
+
+        if method == "ties":
+            tvs = [trim(tv, topk) for tv in tvs]
+            merged_tv = merge_task_vectors(tvs)
+        elif method == "max":
+            merged_tv = torch.max(torch.stack(tvs, dim=0), dim=0)[0]
+        elif method == "min":
+            merged_tv = torch.min(torch.stack(tvs, dim=0), dim=0)[0]
+        elif method == "max_abs":
+            stacked = torch.stack(tvs, dim=0)
+            abs_stacked = torch.abs(stacked)
+            max_idx = torch.argmax(abs_stacked, dim=0)
+            merged_tv = torch.gather(stacked, 0, max_idx.unsqueeze(0)).squeeze(0)
+
+        params[name] = base_tv + lamb * merged_tv
+
+    return params
+
+
+def compute_metrics(accuracy_matrix):
+    faa = np.mean(accuracy_matrix[-1])
+    if accuracy_matrix.shape[0] == 1:
+        return faa, 0.0, 0.0
+    final_acc_per_task = accuracy_matrix[-1]
+    max_acc_per_task = np.max(accuracy_matrix, axis=0)
+    ffm = np.mean(max_acc_per_task[:-1] - final_acc_per_task[:-1])
+    ffd = np.max(max_acc_per_task[:-1] - final_acc_per_task[:-1]) - np.min(
+        max_acc_per_task[:-1] - final_acc_per_task[:-1]
+    )
+
+    return faa, ffm, ffd
+
 
 if __name__ == '__main__':
     # head = SimpleContinualLinear(758, 10)
