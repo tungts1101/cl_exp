@@ -12,6 +12,27 @@ from torch.utils.data import Dataset, DataLoader
 import random
 
 
+def weight_init(m):
+    """Enhanced weight initialization using timm's best practices"""
+    if isinstance(m, nn.Linear):
+        # Use truncated normal for linear layers (standard for transformers)
+        trunc_normal_(m.weight, std=.02)
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
+    elif isinstance(m, nn.Conv2d):
+        # For convolutional layers, use Kaiming normal (He initialization)
+        nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
+    elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2d, nn.GroupNorm)):
+        # For normalization layers
+        nn.init.constant_(m.bias, 0)
+        nn.init.constant_(m.weight, 1.0)
+    elif isinstance(m, nn.Embedding):
+        # For embedding layers
+        trunc_normal_(m.weight, std=.02)
+
+
 def plot_heatmap(true_labels, pred_labels):
     conf_matrix = confusion_matrix(true_labels, pred_labels)
     
@@ -649,12 +670,13 @@ def get_backbone(config):
             model = timm.create_model(
                 "vit_base_patch16_224_in21k", pretrained=True, num_classes=0
             )
+
         model.requires_grad_(False)
         lora_config = LoraConfig(
-            r=16,
-            lora_alpha=16,
+            r=config["model_lora_r"],
+            lora_alpha=config["model_lora_alpha"],
             target_modules=["qkv"],
-            lora_dropout=0.0,
+            lora_dropout=config["model_lora_dropout"],
             bias="none",
             init_lora_weights="gaussian",
         )
@@ -710,14 +732,17 @@ def get_backbone(config):
 
 from sklearn.cluster import KMeans
 from collections import OrderedDict
+from typing import Optional
+
 
 class RandomReplayBuffer:
-    def __init__(self, capacity: int, decay=1.0):
+    def __init__(self, capacity: int, decay=1.0, seed: Optional[int] = None):
         self._capacity = capacity
         self._buffer = []
         self._weights = []
         self._total_seen = 0
         self._decay = decay
+        self._seed = seed
 
     def add(self, x: torch.Tensor, z: torch.Tensor, y: torch.Tensor):
         for i in range(y.size(0)):
@@ -728,123 +753,78 @@ class RandomReplayBuffer:
                 self._buffer.append(entry)
                 self._weights.append(1.0)
             else:
-                is_selected = random.random() < (self._capacity / self._total_seen)
-                if not is_selected:
+                if random.random() >= (self._capacity / self._total_seen):
                     continue
-                
+
                 probs = torch.tensor(self._weights, dtype=torch.float32)
-                inv_probs = 1.0 / (probs + 1e-6)  # lower weight = higher chance
+                inv_probs = 1.0 / (probs + 1e-6)
                 inv_probs = inv_probs / inv_probs.sum()
 
-                idx = torch.multinomial(inv_probs, 1).item()
+                if self._seed is not None:
+                    torch.manual_seed(self._seed + self._total_seen)  # vary by sample
+                idx = torch.multinomial(inv_probs.cpu(), 1).item()
 
-                # Replace if current candidate weight is greater than chosen entry
                 if 1.0 >= self._weights[idx]:
                     self._buffer[idx] = entry
                     self._weights[idx] = 1.0
-    
+
     def update_weights(self):
         if not self._buffer:
             return
-        
         self._weights = [w * self._decay for w in self._weights]
 
-    def sample(self, batch_size: int=32):
+    def sample(self, batch_size: int = 32, seed: Optional[int] = None):
         if not self._buffer:
             return None
-        
+
         weights_np = np.array(self._weights, dtype=np.float32)
         probs = weights_np / weights_np.sum()
-        indices = np.random.choice(len(self._buffer), size=min(batch_size, len(self._buffer)), p=probs)
-        
+
+        if seed is not None:
+            rng = np.random.RandomState(seed)
+            indices = rng.choice(len(self._buffer), size=min(batch_size, len(self._buffer)), p=probs)
+        elif self._seed is not None:
+            rng = np.random.RandomState(self._seed + self._total_seen)
+            indices = rng.choice(len(self._buffer), size=min(batch_size, len(self._buffer)), p=probs)
+        else:
+            indices = np.random.choice(len(self._buffer), size=min(batch_size, len(self._buffer)), p=probs)
+
         xs, zs, ys = zip(*[self._buffer[i] for i in indices])
         x_batch = torch.stack(xs)
         z_batch = torch.stack(zs)
         y_batch = torch.tensor(ys, dtype=torch.long)
         return x_batch, z_batch, y_batch
-    
-    def __iter__(self, batch_size: int = 32):
-        random.shuffle(self._buffer)
-        for i in range(0, len(self._buffer), batch_size):
-            batch = self._buffer[i : i + batch_size]
+
+    def __iter__(self, batch_size: int = 32, seed: Optional[int] = None):
+        buffer = self._buffer.copy()
+        if seed is not None:
+            rng = random.Random(seed)
+            rng.shuffle(buffer)
+        elif self._seed is not None:
+            rng = random.Random(self._seed + self._total_seen)
+            rng.shuffle(buffer)
+        else:
+            random.shuffle(buffer)
+
+        for i in range(0, len(buffer), batch_size):
+            batch = buffer[i: i + batch_size]
             x_batch = torch.stack([x for x, _, _ in batch])
             z_batch = torch.stack([z for _, z, _ in batch])
             y_batch = torch.tensor([y for _, _, y in batch], dtype=torch.long)
             yield x_batch, z_batch, y_batch
-    
-    def split(self, K: int):
-        zs = torch.stack([z for _, z, _ in self._buffer])
-        kmeans = KMeans(n_clusters=K, random_state=0, n_init='auto')
-        labels = kmeans.fit_predict(zs.cpu().numpy())
-        
-        clustered_sets = [[] for _ in range(K)]
-        for idx, cluster_id in enumerate(labels):
-            clustered_sets[cluster_id].append(self._buffer[idx])
-        
-        return clustered_sets
-    
-    # def split_by_cluster_means(self, cluster_means: torch.Tensor):
-    #     """
-    #     Args:
-    #         cluster_means (torch.Tensor): shape (K, dim), list of cluster centers
-    #     """
-    #     zs = torch.stack([z for _, z, _ in self._buffer]).cuda()  # (N, dim)
-    #     cluster_means = cluster_means.cuda()  # (K, dim)
-
-    #     # Compute distance between each sample and each cluster center → (N, K)
-    #     distances = torch.cdist(zs, cluster_means, p=2)  # Euclidean distance
-
-    #     # Assign each sample to the nearest cluster
-    #     nearest_clusters = distances.argmin(dim=1)  # (N,)
-
-    #     clustered_sets = [[] for _ in range(len(cluster_means))]
-    #     for idx, cluster_id in enumerate(nearest_clusters.cpu().tolist()):
-    #         clustered_sets[cluster_id].append(self._buffer[idx])
-
-    #     return clustered_sets
-    
-    def split_by_cluster_means(self, cluster_means: torch.Tensor, cluster_labels: torch.Tensor):
-        """
-        Args:
-            cluster_means (torch.Tensor): (K, dim), cluster centers (prototypes)
-            cluster_labels (torch.Tensor): (K,), corresponding labels for each prototype
-        """
-        zs = torch.stack([z for _, z, _ in self._buffer]).cuda()  # (N, dim)
-        ys = torch.tensor([y.item() for _, _, y in self._buffer]).cuda()  # (N,)
-
-        cluster_means = cluster_means.cuda()
-        cluster_labels = cluster_labels.cuda()
-
-        clustered_sets = [[] for _ in range(len(cluster_means))]
-
-        # For each cluster (prototype label), select matching samples
-        for cluster_id, cluster_label in enumerate(cluster_labels):
-            mask = (ys == cluster_label)  # samples matching the prototype label
-            if mask.sum() == 0:
-                continue  # skip empty clusters
-
-            matched_indices = mask.nonzero(as_tuple=True)[0]
-
-            # Assign all samples with matching label to this cluster
-            for idx in matched_indices:
-                clustered_sets[cluster_id].append(self._buffer[idx.item()])
-
-        return clustered_sets
 
     @property
     def size(self):
         return len(self._buffer)
-    
+
     @property
     def size_by_class(self):
         class_counts = {}
         for _, _, y in self._buffer:
             y_value = y.item()
             class_counts[y_value] = class_counts.get(y_value, 0) + 1
-        
-        # Sort by key and return OrderedDict
-        sorted_class_counts = OrderedDict(sorted(class_counts.items()))
-        return sorted_class_counts
+        return OrderedDict(sorted(class_counts.items()))
+
 
 
 def trim(tensor, topk=100):
@@ -901,8 +881,16 @@ def merge(base_params, tasks_params, method="ties", lamb=1.0, topk=100):
 
 def compute_metrics(accuracy_matrix):
     faa = np.mean(accuracy_matrix[-1])
+    
+    session_averages = []
+    for i in range(accuracy_matrix.shape[0]):
+        session_avg = np.mean(accuracy_matrix[i, :i+1])
+        session_averages.append(session_avg)
+    asa = np.mean(session_averages)
+    
     if accuracy_matrix.shape[0] == 1:
-        return faa, 0.0, 0.0
+        return faa, 0.0, 0.0, asa
+    
     final_acc_per_task = accuracy_matrix[-1]
     max_acc_per_task = np.max(accuracy_matrix, axis=0)
     ffm = np.mean(max_acc_per_task[:-1] - final_acc_per_task[:-1])
@@ -910,7 +898,7 @@ def compute_metrics(accuracy_matrix):
         max_acc_per_task[:-1] - final_acc_per_task[:-1]
     )
 
-    return faa, ffm, ffd
+    return faa, ffm, ffd, asa
 
 
 if __name__ == '__main__':

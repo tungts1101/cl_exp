@@ -26,7 +26,7 @@ from deps import StreamingLDA
 
 
 timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-
+os.makedirs("logs", exist_ok=True)
 
 def setup_logger(log_file=f"logs/_exp60.log"):
     logger = logging.getLogger("my_logger")
@@ -325,7 +325,8 @@ class Model(nn.Module):
         return f"Model(trainable_params={trainable_params}, total_params={total_params}, percentage={trainable_params * 100 / total_params:.2f})"
 
 
-os.makedirs("/media/ellen/HardDisk/cl/logs/checkpoints", exist_ok=True)
+os.makedirs("/home/lis/checkpoints", exist_ok=True)
+
 
 
 def trim(tensor, topk=100):
@@ -707,10 +708,10 @@ class Learner:
         return f"{self._config['seed']}_{self._config['dataset_name']}_{self._config['dataset_num_task']}_{self._config['model_backbone']}_{self._config['train_method']}_robust_training"
 
     def backbone_checkpoint(self, task=-1):
-        return f"/media/ellen/HardDisk/cl/logs/checkpoints/{self.prefix()}_backbone" + (f"_{task}.pt" if task >= 0 else "_base.pt")
+        return f"/home/lis/checkpoints/{self.prefix()}_backbone" + (f"_{task}.pt" if task >= 0 else "_base.pt")
 
     def head_checkpoint(self, task):
-        return f"/media/ellen/HardDisk/cl/logs/checkpoints/{self.prefix()}_head_{task}.pt"
+        return f"/home/lis/checkpoints/{self.prefix()}_head_{task}.pt"
 
 
 def set_random(seed):

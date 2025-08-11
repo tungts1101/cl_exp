@@ -7,7 +7,6 @@ import random
 import timm
 from tqdm import tqdm
 import os
-import logging
 from datetime import datetime
 from peft import LoraConfig, get_peft_model
 import copy
@@ -17,7 +16,7 @@ from petl import vision_transformer_ssf
 from petl import vision_transformer_adapter
 from petl.vpt import build_promptmodel
 from easydict import EasyDict
-from _exp import ContinualLearnerHead
+from _exp import ContinualLearnerHead, setup_logger, get_backbone, RandomReplayBuffer, merge, compute_metrics
 from inc_net import CosineLinear
 from util import accuracy, set_random
 import gc
@@ -26,241 +25,7 @@ from deps import StreamingLDA
 
 
 timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-
-
-def setup_logger(log_file=f"logs/_exp58.log"):
-    logger = logging.getLogger("my_logger")
-    logger.setLevel(logging.DEBUG)
-
-    logger.propagate = False
-
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-
-    file_formatter = logging.Formatter('%(asctime)s - %(message)s')
-    console_formatter = logging.Formatter("%(asctime)s [%(filename)s] => %(message)s")
-
-    file_handler.setFormatter(file_formatter)
-    console_handler.setFormatter(console_formatter)
-
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-
-    return logger
-
-
-logger = setup_logger()
-
-
-def get_backbone(config):
-    if "lora" in config["model_backbone"]:
-        if config["model_backbone"] == "vit_base_patch16_224_lora":
-            model = timm.create_model(
-                "vit_base_patch16_224", pretrained=True, num_classes=0
-            )
-        elif config["model_backbone"] == "vit_base_patch16_224_in21k_lora":
-            model = timm.create_model(
-                "vit_base_patch16_224_in21k", pretrained=True, num_classes=0
-            )
-        model.requires_grad_(False)
-        lora_config = LoraConfig(
-            r=16,
-            lora_alpha=16,
-            target_modules=["qkv"],
-            lora_dropout=0.0,
-            bias="none",
-            init_lora_weights="gaussian",
-        )
-        model = get_peft_model(model, lora_config)
-        return model
-    elif "adapter" in config["model_backbone"]:
-        tuning_config = EasyDict(
-            # AdaptFormer
-            ffn_adapt=True,
-            ffn_option="parallel",
-            ffn_adapter_layernorm_option="none",
-            ffn_adapter_init_option="lora",
-            ffn_adapter_scalar="0.1",
-            ffn_num=64,
-            d_model=768,
-            # VPT related
-            vpt_on=False,
-            vpt_num=0,
-        )
-        if config["model_backbone"] == "vit_base_patch16_224_adapter":
-            model = vision_transformer_adapter.vit_base_patch16_224_adapter(
-                num_classes=0,
-                global_pool=False,
-                drop_path_rate=0.0,
-                tuning_config=tuning_config,
-            )
-        elif config["model_backbone"] == "vit_base_patch16_224_in21k_adapter":
-            model = vision_transformer_adapter.vit_base_patch16_224_in21k_adapter(
-                num_classes=0,
-                global_pool=False,
-                drop_path_rate=0.0,
-                tuning_config=tuning_config,
-            )
-        return model
-    elif "ssf" in config["model_backbone"]:
-        if config["model_backbone"] == "vit_base_patch16_224_ssf":
-            model = timm.create_model(
-                "vit_base_patch16_224_ssf", pretrained=True, num_classes=0
-            )
-        elif config["model_backbone"] == "vit_base_patch16_224_in21k_ssf":
-            model = timm.create_model(
-                "vit_base_patch16_224_in21k_ssf", pretrained=True, num_classes=0
-            )
-
-        for name, param in model.named_parameters():
-            if "ssf_scale_" in name:
-                nn.init.ones_(param)
-            elif "ssf_shift_" in name:
-                nn.init.zeros_(param)
-            else:
-                param.requires_grad_(False)
-        return model
-
-from sklearn.cluster import KMeans
-from collections import OrderedDict
-
-class RandomReplayBuffer:
-    def __init__(self, capacity: int, decay=1.0):
-        self._capacity = capacity
-        self._buffer = []
-        self._weights = []
-        self._total_seen = 0
-        self._decay = decay
-
-    def add(self, x: torch.Tensor, z: torch.Tensor, y: torch.Tensor):
-        for i in range(y.size(0)):
-            self._total_seen += 1
-            entry = (x[i].cpu(), z[i].cpu(), y[i].cpu())
-
-            if len(self._buffer) < self._capacity:
-                self._buffer.append(entry)
-                self._weights.append(1.0)
-            else:
-                is_selected = random.random() < (self._capacity / self._total_seen)
-                if not is_selected:
-                    continue
-                
-                probs = torch.tensor(self._weights, dtype=torch.float32)
-                inv_probs = 1.0 / (probs + 1e-6)  # lower weight = higher chance
-                inv_probs = inv_probs / inv_probs.sum()
-
-                idx = torch.multinomial(inv_probs, 1).item()
-
-                # Replace if current candidate weight is greater than chosen entry
-                if 1.0 >= self._weights[idx]:
-                    self._buffer[idx] = entry
-                    self._weights[idx] = 1.0
-    
-    def update_weights(self):
-        if not self._buffer:
-            return
-        
-        self._weights = [w * self._decay for w in self._weights]
-
-    def sample(self, batch_size: int=32):
-        if not self._buffer:
-            return None
-        
-        weights_np = np.array(self._weights, dtype=np.float32)
-        probs = weights_np / weights_np.sum()
-        indices = np.random.choice(len(self._buffer), size=min(batch_size, len(self._buffer)), p=probs)
-        
-        xs, zs, ys = zip(*[self._buffer[i] for i in indices])
-        x_batch = torch.stack(xs)
-        z_batch = torch.stack(zs)
-        y_batch = torch.tensor(ys, dtype=torch.long)
-        return x_batch, z_batch, y_batch
-    
-    def __iter__(self, batch_size: int = 32):
-        random.shuffle(self._buffer)
-        for i in range(0, len(self._buffer), batch_size):
-            batch = self._buffer[i : i + batch_size]
-            x_batch = torch.stack([x for x, _, _ in batch])
-            z_batch = torch.stack([z for _, z, _ in batch])
-            y_batch = torch.tensor([y for _, _, y in batch], dtype=torch.long)
-            yield x_batch, z_batch, y_batch
-    
-    def split(self, K: int):
-        zs = torch.stack([z for _, z, _ in self._buffer])
-        kmeans = KMeans(n_clusters=K, random_state=0, n_init='auto')
-        labels = kmeans.fit_predict(zs.cpu().numpy())
-        
-        clustered_sets = [[] for _ in range(K)]
-        for idx, cluster_id in enumerate(labels):
-            clustered_sets[cluster_id].append(self._buffer[idx])
-        
-        return clustered_sets
-    
-    # def split_by_cluster_means(self, cluster_means: torch.Tensor):
-    #     """
-    #     Args:
-    #         cluster_means (torch.Tensor): shape (K, dim), list of cluster centers
-    #     """
-    #     zs = torch.stack([z for _, z, _ in self._buffer]).cuda()  # (N, dim)
-    #     cluster_means = cluster_means.cuda()  # (K, dim)
-
-    #     # Compute distance between each sample and each cluster center → (N, K)
-    #     distances = torch.cdist(zs, cluster_means, p=2)  # Euclidean distance
-
-    #     # Assign each sample to the nearest cluster
-    #     nearest_clusters = distances.argmin(dim=1)  # (N,)
-
-    #     clustered_sets = [[] for _ in range(len(cluster_means))]
-    #     for idx, cluster_id in enumerate(nearest_clusters.cpu().tolist()):
-    #         clustered_sets[cluster_id].append(self._buffer[idx])
-
-    #     return clustered_sets
-    
-    def split_by_cluster_means(self, cluster_means: torch.Tensor, cluster_labels: torch.Tensor):
-        """
-        Args:
-            cluster_means (torch.Tensor): (K, dim), cluster centers (prototypes)
-            cluster_labels (torch.Tensor): (K,), corresponding labels for each prototype
-        """
-        zs = torch.stack([z for _, z, _ in self._buffer]).cuda()  # (N, dim)
-        ys = torch.tensor([y.item() for _, _, y in self._buffer]).cuda()  # (N,)
-
-        cluster_means = cluster_means.cuda()
-        cluster_labels = cluster_labels.cuda()
-
-        clustered_sets = [[] for _ in range(len(cluster_means))]
-
-        # For each cluster (prototype label), select matching samples
-        for cluster_id, cluster_label in enumerate(cluster_labels):
-            mask = (ys == cluster_label)  # samples matching the prototype label
-            if mask.sum() == 0:
-                continue  # skip empty clusters
-
-            matched_indices = mask.nonzero(as_tuple=True)[0]
-
-            # Assign all samples with matching label to this cluster
-            for idx in matched_indices:
-                clustered_sets[cluster_id].append(self._buffer[idx.item()])
-
-        return clustered_sets
-
-    @property
-    def size(self):
-        return len(self._buffer)
-    
-    @property
-    def size_by_class(self):
-        class_counts = {}
-        for _, _, y in self._buffer:
-            y_value = y.item()
-            class_counts[y_value] = class_counts.get(y_value, 0) + 1
-        
-        # Sort by key and return OrderedDict
-        sorted_class_counts = OrderedDict(sorted(class_counts.items()))
-        return sorted_class_counts
+logger = setup_logger(f"logs/_exp59.log")
 
 
 class Model(nn.Module):
@@ -297,7 +62,9 @@ class Model(nn.Module):
 
     def update_head(self, num_classes, freeze_old=True):
         if self.head == None:
-            self.head = ContinualLearnerHead(self.backbone.num_features, num_classes, with_norm=True)
+            self.head = ContinualLearnerHead(
+                self.backbone.num_features, num_classes, with_norm=True
+            )
         else:
             self.head.update(num_classes, freeze_old=freeze_old)
         self.head.cuda()
@@ -311,6 +78,7 @@ class Model(nn.Module):
 
     def get_features(self, x):
         f = self.backbone(x)
+        f = F.normalize(f, dim=1)
         return f
 
     def forward(self, x):
@@ -323,75 +91,6 @@ class Model(nn.Module):
         trainable_params = count_parameters(self, trainable=True)
         total_params = count_parameters(self)
         return f"Model(trainable_params={trainable_params}, total_params={total_params}, percentage={trainable_params * 100 / total_params:.2f})"
-
-
-os.makedirs("/media/ellen/HardDisk/cl/logs/checkpoints", exist_ok=True)
-
-
-def trim(tensor, topk=100):
-    flattened = tensor.view(-1)
-    magnitudes = torch.abs(flattened)
-    num_keep = max(1, int(len(flattened) * topk / 100))
-    threshold = torch.topk(magnitudes, num_keep, largest=True, sorted=True).values[-1]
-    mask = magnitudes >= threshold
-    trimmed = torch.where(mask, flattened, torch.tensor(0.0, dtype=tensor.dtype))
-
-    gamma = torch.sign(trimmed)
-    mu = torch.abs(trimmed)
-
-    return (trimmed.view_as(tensor), gamma.view_as(tensor), mu.view_as(tensor))
-
-
-def merge_task_vectors(trimmed_task_vectors):
-    gamma_tvs = torch.stack([tv[1] for tv in trimmed_task_vectors], dim=0)
-    gamma = torch.sign(gamma_tvs.sum(dim=0))
-    mask = gamma_tvs == gamma
-    tau_tvs = torch.stack([tv[0] for tv in trimmed_task_vectors], dim=0)
-    mean_tvs = torch.where(mask, tau_tvs, torch.tensor(0.0, dtype=tau_tvs.dtype)).sum(
-        dim=0
-    ) / mask.sum(dim=0).clamp(min=1)
-
-    return mean_tvs
-
-
-def merge(base_params, tasks_params, method="ties", lamb=1.0, topk=100):
-    params = {}
-    for name in base_params:
-        base_tv = base_params[name].clone()
-        task_vectors = [task_params[name] for task_params in tasks_params]
-
-        tvs = [task_vectors[i] - base_tv for i in range(len(task_vectors))]
-
-        if method == "ties":
-            tvs = [trim(tv, topk) for tv in tvs]
-            merged_tv = merge_task_vectors(tvs)
-        elif method == "max":
-            merged_tv = torch.max(torch.stack(tvs, dim=0), dim=0)[0]
-        elif method == "min":
-            merged_tv = torch.min(torch.stack(tvs, dim=0), dim=0)[0]
-        elif method == "max_abs":
-            stacked = torch.stack(tvs, dim=0)
-            abs_stacked = torch.abs(stacked)
-            max_idx = torch.argmax(abs_stacked, dim=0)
-            merged_tv = torch.gather(stacked, 0, max_idx.unsqueeze(0)).squeeze(0)
-
-        params[name] = base_tv + lamb * merged_tv
-
-    return params
-
-
-def compute_metrics(accuracy_matrix):
-    faa = np.mean(accuracy_matrix[-1])
-    if accuracy_matrix.shape[0] == 1:
-        return faa, 0.0, 0.0
-    final_acc_per_task = accuracy_matrix[-1]
-    max_acc_per_task = np.max(accuracy_matrix, axis=0)
-    ffm = np.mean(max_acc_per_task[:-1] - final_acc_per_task[:-1])
-    ffd = np.max(max_acc_per_task[:-1] - final_acc_per_task[:-1]) - np.min(
-        max_acc_per_task[:-1] - final_acc_per_task[:-1]
-    )
-
-    return faa, ffm, ffd
 
 
 class Learner:
@@ -407,9 +106,22 @@ class Learner:
         self.model = Model(config)
         self.model.cuda()
         self.model.eval()
-        torch.save(self.model.get_backbone_trainable_params(), self.backbone_checkpoint())
+        torch.save(
+            self.model.get_backbone_trainable_params(), self.backbone_checkpoint()
+        )
 
         self._faa, self._ffm = 0, 0
+        os.makedirs("/home/lis/checkpoints", exist_ok=True)
+
+    def sample_cluster_centers(self, num_clusters, method="random"):
+        if method == "random":
+            max_val = 1.0
+            min_val = -1.0
+            centers = (
+                torch.rand(num_clusters, self.model.feature_dim) * (max_val - min_val)
+                + min_val
+            )
+            return centers.cuda()
 
     def learn(self, data_manager):
         self.data_manager = data_manager
@@ -423,9 +135,9 @@ class Learner:
             input_shape=self.model.feature_dim, num_classes=self._total_classnum
         )
 
-        # for _ in range(num_tasks):
-        #     self.model.update_head(10, freeze_old=False)
-        
+        self._centers = self.sample_cluster_centers(self._total_classnum * 5)
+        print(f"Cluster centers sampled: {self._centers.shape}")
+
         self.model.cuda()
 
         for task in range(num_tasks):
@@ -458,10 +170,10 @@ class Learner:
             for _, (_, _, x, y) in tqdm(enumerate(test_loader)):
                 x, y = x.cuda(), y.cuda()
 
-                logits = self.model(x)['logits']
+                # logits = self.model(x)["logits"]
 
-                # features = self.model.get_features(x)
-                # logits = self.model.head(features)["logits"]
+                features = self.model.get_features(x)
+                logits = self.model.head(features)["logits"]
 
                 # logits = self._slda_classifier.predict(features)
 
@@ -520,72 +232,160 @@ class Learner:
             shuffle=True,
             num_workers=4,
         )
-        
-        task_model = Model(self._config)
-        if not os.path.exists(self.backbone_checkpoint(self._cur_task)) or not os.path.exists(self.head_checkpoint(self._cur_task)) or self._config["reset"]:
-            if self._config["train_method"] == "acc":
-                task_model.backbone.load_state_dict(self.model.backbone.state_dict(), strict=False)
-            elif self._config["train_method"] == "seq":
-                task_model.backbone.load_state_dict(torch.load(self.backbone_checkpoint(self._cur_task - 1)), strict=False)
-                
-            task_model.update_head(self._total_classes - self._known_classes)
-            task_model.cuda()
-            print(task_model)
-            
+
+        if (
+            not os.path.exists(self.backbone_checkpoint(self._cur_task))
+            or not os.path.exists(self.head_checkpoint(self._cur_task))
+            or self._config["reset"]
+        ):
+            if self._config["train_method"] == "seq":
+                self.model.backbone.load_state_dict(
+                    torch.load(self.backbone_checkpoint(self._cur_task - 1)),
+                    strict=False,
+                )
+
+            self.model.update_head(
+                self._total_classes - self._known_classes, freeze_old=True
+            )
+            self.model.cuda()
+            print(self.model)
+
             epochs = self._config["train_epochs"]
+
+            parameters = [
+                {
+                    "params": [
+                        p for p in self.model.backbone.parameters() if p.requires_grad
+                    ],
+                    "lr": 1e-2,
+                    "weight_decay": 5e-4,
+                },
+                # {
+                #     "params": [
+                #         p
+                #         for i, head in enumerate(self.model.head.heads)
+                #         if i != self._cur_task
+                #         for p in head.parameters()
+                #         if p.requires_grad
+                #     ],
+                #     "lr": 1e-4,
+                #     "weight_decay": 1e-4,
+                # },
+                {
+                    "params": [
+                        p
+                        for p in self.model.head.heads[self._cur_task].parameters()
+                        if p.requires_grad
+                    ],
+                    "lr": 1e-2,
+                    "weight_decay": 5e-4,
+                },
+            ]
+            optimizer = optim.SGD(parameters, momentum=0.9)
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=epochs, eta_min=1e-6
+            )
+
+            # all_features, all_labels = [], []
+            # with torch.no_grad():
+            #     pretrained_backbone = timm.create_model(
+            #         "vit_base_patch16_224", pretrained=True, num_classes=0
+            #     ).eval().cuda()
+
+            #     for _, (_, _, x, y) in tqdm(enumerate(train_loader)):
+            #         x, y = x.cuda(), y.cuda()
+            #         features = pretrained_backbone(x)
+            #         # features = self.model.get_features(x)
+            #         all_features.append(features.cpu())
+            #         all_labels.append(y.cpu())
+
+            # all_features = torch.cat(all_features, dim=0)
+            # all_labels = torch.cat(all_labels, dim=0)
+
+            # K = int(5 * (self._total_classes - self._known_classes))
+            # kmeans = KMeans(n_clusters=K, random_state=0, n_init='auto').fit(all_features.numpy())
+            # cluster_centers = torch.tensor(kmeans.cluster_centers_, dtype=torch.float32).cuda()
             
-            optimizer = optim.SGD(task_model.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-4)
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=0.0)
-            
-            all_features, all_labels = [], []
-            with torch.no_grad():
-                pretrained_backbone = timm.create_model(
-                    "vit_base_patch16_224", pretrained=True, num_classes=0
-                ).eval().cuda()
-
-                for _, (_, _, x, y) in tqdm(enumerate(train_loader)):
-                    x, y = x.cuda(), y.cuda()
-                    features = pretrained_backbone(x)
-                    # features = self.model.get_features(x)
-                    all_features.append(features.cpu())
-                    all_labels.append(y.cpu())
-
-            all_features = torch.cat(all_features, dim=0)
-            all_labels = torch.cat(all_labels, dim=0)
-
-            K = int(5 * (self._total_classes - self._known_classes))
-            kmeans = KMeans(n_clusters=K, random_state=0, n_init='auto').fit(all_features.numpy())
-            cluster_centers = torch.tensor(kmeans.cluster_centers_, dtype=torch.float32).cuda()
-            lambda_rb_loss = 0.0
+            base_reg_weight = 1.0
 
             for epoch in range(epochs):
-                task_model.train()
+                self.model.train()
                 total_ce, total_rb, total_acc, total = 0, 0, 0, 0
+
+                epoch_scale = max(0.1, 1.0 - (epoch / epochs))
+                reg_weight = base_reg_weight * epoch_scale
+                reg_weight = max(0.1, reg_weight)
+                logger.info(
+                    f"Task {self._cur_task + 1}, Epoch {epoch + 1}/{epochs}, "
+                    f"Reg Weight: {reg_weight:.4f}"
+                )
 
                 for _, (_, x_aug, x, y) in enumerate(train_loader):
                     x_aug, x, y = x_aug.cuda(), x.cuda(), y.cuda()
-                    y = torch.where(y - self._known_classes >= 0, y - self._known_classes, -100)
+                    y = torch.where(
+                        y - self._known_classes >= 0, y - self._known_classes, -100
+                    )
 
-                    features = task_model.get_features(x)
-                    logits = task_model.head(features)['logits']
+                    features = self.model.get_features(x)
+                    logits = self.model.head.heads[self._cur_task](features)
                     ce_loss = F.cross_entropy(logits, y)
-                    
-                    probs = F.softmax(logits, dim=1)
-                    sample_entropies = -(probs * probs.log()).sum(dim=1)  # [B]
-                    
-                    aug_features = task_model.get_features(x_aug)
-                    temperature = 0.1
-                    features_norm = F.normalize(features, dim=1)
-                    aug_features_norm = F.normalize(aug_features, dim=1)
 
-                    sim_matrix = torch.matmul(features_norm, aug_features_norm.t())  # [B, B]
-                    logits_nce = sim_matrix / temperature
+                    rb_loss = torch.tensor(0.0).cuda()
 
-                    labels_nce = torch.arange(x.size(0)).cuda()
-                    info_nce_loss = F.cross_entropy(logits_nce, labels_nce)
+
+                    # calculate local robustness loss
+                    with torch.no_grad():
+                        # distances = torch.cdist(features, self._centers, p=2)
+                        # nearest_idx = distances.argmin(dim=1) # [B]
+
+                        sim_matrix = torch.matmul(features, self._centers.T)  # dot product
+                        nearest_idx = sim_matrix.argmax(dim=1) # [B]
                     
-                    rb_loss = sample_entropies.mean() + info_nce_loss
+                    num_clusters = self._centers.shape[0]
+                    total_samples = x.size(0)
 
+                    for i in range(num_clusters):
+                        cluster_mask = nearest_idx == i
+                        if cluster_mask.sum() == 0:
+                            continue
+                        cluster_features = features[cluster_mask]
+                        center_features = self._centers[i].unsqueeze(0).expand_as(cluster_features)
+
+                        # cluster_features = F.normalize(cluster_features, dim=1)
+                        # center_features = F.normalize(center_features, dim=1)
+
+                        # pos_sim = (cluster_features * center_features).sum(dim=1)
+
+                        # reg_loss = (cluster_mask.sum().float() / total_samples ) * (1.0 - pos_sim.mean())
+                        # rb_loss += reg_loss
+
+                        cluster_logits = logits[cluster_mask]
+                        cluster_probs = F.softmax(cluster_logits, dim=1)
+                        cluster_entropies = -(cluster_probs * cluster_probs.log()).sum(dim=1)
+
+                        center_features = F.normalize(center_features, dim=1)
+                        center_logits = self.model.head.heads[self._cur_task](center_features)
+                        center_probs = F.softmax(center_logits, dim=1)
+                        center_entropies = -(center_probs * center_probs.log()).sum(dim=1)
+
+                        rb_loss += (cluster_mask.sum().float() / total_samples ) * torch.abs(cluster_entropies - center_entropies).mean()
+
+
+                    # probs = F.softmax(logits, dim=1)
+                    # sample_entropies = -(probs * probs.log()).sum(dim=1)  # [B]
+
+                    # aug_features = task_model.get_features(x_aug)
+                    # temperature = 0.1
+                    # features_norm = F.normalize(features, dim=1)
+                    # aug_features_norm = F.normalize(aug_features, dim=1)
+
+                    # sim_matrix = torch.matmul(features_norm, aug_features_norm.t())  # [B, B]
+                    # logits_nce = sim_matrix / temperature
+
+                    # labels_nce = torch.arange(x.size(0)).cuda()
+                    # info_nce_loss = F.cross_entropy(logits_nce, labels_nce)
+
+                    # rb_loss = sample_entropies.mean() + info_nce_loss
 
                     # # === Entropy LOSS ===
                     # with torch.no_grad():
@@ -600,13 +400,11 @@ class Learner:
                     # rb_loss = torch.abs(sample_entropies - cluster_entropies).mean()
                     # rb_loss = sample_entropies.mean()
 
-
                     # # === L2 LOSS ===
                     # lambda_rb_loss = 0.05
                     # nearest_centers = cluster_centers[nearest_idx]  # [B, D]
                     # l2_loss = F.mse_loss(features, nearest_centers) + F.l1_loss(features, nearest_centers)
                     # rb_loss = l2_loss
-
 
                     # # === InfoNCE LOSS ===
                     # lambda_rb_loss = 0.5
@@ -616,8 +414,7 @@ class Learner:
                     # labels_nce = nearest_idx
                     # info_nce_loss = F.cross_entropy(logits_nce, labels_nce)
                     # rb_loss = info_nce_loss
-                    
-                    
+
                     # # === KL Divergence LOSS ===
                     # lambda_rb_loss = 0.5
                     # probs = F.softmax(logits, dim=1)
@@ -631,11 +428,10 @@ class Learner:
                     # cluster_logits = task_model.head(cluster_feats)['logits']
                     # cluster_probs = F.softmax(cluster_logits, dim=1)
                     # rb_loss = F.kl_div(sample_log_probs, cluster_probs, reduction='batchmean')
-                    
-                    
-                
+
                     # loss = ce_loss + lambda_rb_loss * rb_loss
-                    loss = ce_loss
+
+                    loss = ce_loss + reg_weight * rb_loss
 
                     optimizer.zero_grad()
                     loss.backward()
@@ -650,68 +446,74 @@ class Learner:
 
                 logger.info(
                     f"Task {self._cur_task + 1}, Epoch {epoch + 1}/{epochs}, "
-                    f"Loss: {(total_ce + lambda_rb_loss * total_rb) / total:.4f}, "
+                    f"Loss: {(total_ce + reg_weight * total_rb) / total:.4f}, "
                     f"CE Loss: {total_ce / total:.4f}, RB Loss: {total_rb / total:.4f}, "
                     f"Acc: {total_acc / total:.4f}"
                 )
 
-            torch.save(task_model.get_backbone_trainable_params(), self.backbone_checkpoint(self._cur_task))
-            torch.save(task_model.head.heads[-1].state_dict(), self.head_checkpoint(self._cur_task))
+            torch.save(
+                self.model.get_backbone_trainable_params(),
+                self.backbone_checkpoint(self._cur_task),
+            )
+            torch.save(
+                self.model.head.heads[-1].state_dict(),
+                self.head_checkpoint(self._cur_task),
+            )
         else:
-            task_model.backbone.load_state_dict(
+            self.model.backbone.load_state_dict(
                 torch.load(self.backbone_checkpoint(self._cur_task)), strict=False
             )
-            task_model.cuda()
-        
+
         # # Add samples to replay buffer...
-        # task_model.eval()
+        # self.model.eval()
         # with torch.no_grad():
         #     for _, batch in enumerate(train_loader):
         #         _, _, x, y = batch
         #         x, y = x.cuda(), y.cuda()
-        #         features = task_model.get_features(x)
+        #         features = self.model.get_features(x)
         #         self.buffer.add(x, features, y)
         # logger.info(f"Buffer size: {self.buffer.size}")
         # logger.info(f"Buffer size by class: {self.buffer.size_by_class}")
-    
-        del task_model
-        gc.collect()
-        torch.cuda.empty_cache()
-        
-        if self._config["model_merge"] == "none":
-            print(f"Load task model from {self.backbone_checkpoint(self._cur_task)}")
-            self.model.backbone.load_state_dict(torch.load(self.backbone_checkpoint(self._cur_task)), strict=False)
-        else:
+
+        if self._config["model_merge"] != "none":
             print(f"Perform model merging with method {self._config['model_merge']}")
             self.merge()
-        
-        
-        proto_set = self.data_manager.get_dataset(np.arange(self._known_classes, self._total_classes), source="train", mode="test")
-        proto_loader = DataLoader(proto_set, batch_size=128, shuffle=False, num_workers=4)
-        
-        self.model.update_fc(self._total_classes)
-        embedding_list = []
-        label_list = []
-        with torch.no_grad():
-            for i, batch in tqdm(enumerate(proto_loader)):
-                (_, _, data,label)=batch
-                data=data.cuda()
-                label=label.cuda()
-                embedding = self.model.get_features(data)
-                embedding_list.append(embedding.cpu())
-                label_list.append(label.cpu())
-        
-        embedding_list = torch.cat(embedding_list, dim=0)
-        label_list = torch.cat(label_list, dim=0)
 
-        class_list=np.unique(proto_set.labels)
-        for class_index in class_list:
-            data_index=(label_list==class_index).nonzero().squeeze(-1)
-            embedding=embedding_list[data_index]
-            proto=embedding.mean(0)
-            self.model.fc.weight.data[class_index]=proto
-            
-        
+        # proto_set = self.data_manager.get_dataset(
+        #     np.arange(self._known_classes, self._total_classes),
+        #     source="train",
+        #     mode="test",
+        # )
+        # proto_loader = DataLoader(
+        #     proto_set, batch_size=128, shuffle=False, num_workers=4
+        # )
+
+        # self.model.update_fc(self._total_classes)
+        # embedding_list = []
+        # label_list = []
+        # with torch.no_grad():
+        #     for i, batch in tqdm(enumerate(proto_loader)):
+        #         (_, _, data, label) = batch
+        #         data = data.cuda()
+        #         label = label.cuda()
+        #         embedding = self.model.get_features(data)
+        #         embedding_list.append(embedding.cpu())
+        #         label_list.append(label.cpu())
+
+        # embedding_list = torch.cat(embedding_list, dim=0)
+        # label_list = torch.cat(label_list, dim=0)
+
+        # class_list = np.unique(proto_set.labels)
+        # for class_index in class_list:
+        #     data_index = (label_list == class_index).nonzero().squeeze(-1)
+        #     embedding = embedding_list[data_index]
+        #     proto = embedding.mean(0)
+        #     self.model.fc.weight.data[class_index] = proto
+
+
+
+
+
         # with torch.no_grad():
         #     for i, batch in tqdm(enumerate(proto_loader)):
         #         (_, _, data,label)=batch
@@ -720,20 +522,13 @@ class Learner:
         #         embedding = self.model.get_features(data)
         #         for x, y in zip(embedding, label):
         #             self._slda_classifier.fit(x.cpu(), y.view(1, ))
-                    
-        
-        # self.model.update_head(self._total_classes - self._known_classes, freeze_old=False)
-        # self.model.cuda()
-        # self.model.head.heads[self._cur_task].load_state_dict(
-        #     torch.load(self.head_checkpoint(self._cur_task)), strict=True
-        # )
-        
+
         # logger.info("Aligning classifier with robust training")
         # self.model.train()
         # if self._cur_task > 0:
         #     print(self.model)
         #     epochs = 10
-            
+
         #     # clustered_sets = self.buffer.split(int(1.2 * self._total_classes))
 
         #     optimizer = optim.SGD(self.model.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-4)
@@ -742,22 +537,22 @@ class Learner:
         #     for epoch in range(epochs):
         #         total_acc, total_samples = 0, 0
         #         total_losses, total_ce_losses, total_rb_losses = 0.0, 0.0, 0.0
-                
+
         #         lambda_ce_loss, lambda_rb_loss = 1.0, 1.0
-                
+
         #         # for i, cluster in enumerate(clustered_sets):
         #         #     if len(cluster) == 0:
         #         #         continue
-                    
+
         #         #     x, z, y = zip(*cluster)
         #         #     x = torch.stack(x).cuda()
         #         #     z = torch.stack(z).cuda()
         #         #     y = torch.tensor(y, dtype=torch.long).cuda()
-                    
+
         #         #     f = self.model.get_features(x)
         #         #     logits = self.model.head(f)['logits']
         #         #     ce_loss = F.cross_entropy(logits, y)
-                    
+
         #         #     cluster_center = z.mean(dim=0, keepdim=True).cuda()
         #         #     cluster_logits = self.model.head(cluster_center)['logits']
         #         #     cluster_probs = F.softmax(cluster_logits, dim=1)
@@ -776,36 +571,36 @@ class Learner:
         #         #     optimizer.zero_grad()
         #         #     loss.backward()
         #         #     optimizer.step()
-                    
+
         #         #     total_losses += loss.item() * x.size(0)
         #         #     total_ce_losses += ce_loss.item() * x.size(0)
         #         #     total_rb_losses += weighted_rb_loss.item() * x.size(0)
         #         #     total_acc += (logits.argmax(dim=1) == y).sum().item()
         #         #     total_samples += x.size(0)
-                
+
         #         for _ in range(int(self.buffer.size // 64)):
         #             x, z, y = self.buffer.sample(64)
         #             x, z, y = x.cuda(), z.cuda(), y.cuda()
         #             f = self.model.get_features(x)
         #             logits = self.model.head(f)['logits']
-                    
+
         #             ce_loss = F.cross_entropy(logits, y)
         #             probs = F.softmax(logits, dim=1)
         #             sample_entropies = -(probs * probs.log()).sum(dim=1)
         #             rb_loss = sample_entropies.mean()
-                    
+
         #             loss = lambda_ce_loss * ce_loss + lambda_rb_loss * rb_loss
-                    
+
         #             optimizer.zero_grad()
         #             loss.backward()
         #             optimizer.step()
-                    
+
         #             total_losses += loss.item() * x.size(0)
         #             total_ce_losses += ce_loss.item() * x.size(0)
         #             total_rb_losses += rb_loss.item() * x.size(0)
         #             total_acc += (logits.argmax(dim=1) == y).sum().item()
-        #             total_samples += x.size(0) 
-                
+        #             total_samples += x.size(0)
+
         #         scheduler.step()
         #         log = {
         #             "total_loss": total_losses / total_samples,
@@ -820,15 +615,17 @@ class Learner:
         #         )
 
         # self.buffer.update_weights()
-        
+
     def prefix(self):
         return f"{self._config['seed']}_{self._config['dataset_name']}_{self._config['dataset_num_task']}_{self._config['model_backbone']}_{self._config['train_method']}_robust_training"
 
     def backbone_checkpoint(self, task=-1):
-        return f"/media/ellen/HardDisk/cl/logs/checkpoints/{self.prefix()}_backbone" + (f"_{task}.pt" if task >= 0 else "_base.pt")
+        return f"/home/lis/checkpoints/{self.prefix()}_backbone" + (
+            f"_{task}.pt" if task >= 0 else "_base.pt"
+        )
 
     def head_checkpoint(self, task):
-        return f"/media/ellen/HardDisk/cl/logs/checkpoints/{self.prefix()}_head_{task}.pt"
+        return f"/home/lis/checkpoints/{self.prefix()}_head_{task}.pt"
 
 
 def set_random(seed):
@@ -849,8 +646,9 @@ def set_random(seed):
 #     "vtab": [(5, 10, 10)]
 # }
 data_table = {
-    # "cifar224": [(10, 10, 10)],
+    "cifar224": [(10, 10, 10)],
     "imagenetr": [(10, 20, 20)],
+    "imageneta": [(10, 20, 20)],
 }
 
 for model_backbone in ["vit_base_patch16_224_lora"]:
@@ -875,13 +673,13 @@ for model_backbone in ["vit_base_patch16_224_lora"]:
                     "dataset_increment": dataset_increment,
                 }
                 config.update(dataset_config)
-                
+
                 train_config = {
                     "train_epochs": 10,
                     "train_batch_size": 48,
                     "train_method": "seq",
                     "train_buffer_size": 1000,
-                    "train_split_K": 250
+                    "train_split_K": 250,
                 }
 
                 config.update(train_config)
@@ -895,7 +693,7 @@ for model_backbone in ["vit_base_patch16_224_lora"]:
                     False,
                 )
 
-                for model_merge in ["ties"]:
+                for model_merge in ["none"]:
                     model_config = {
                         "model_backbone": model_backbone,
                         "model_merge": model_merge,
